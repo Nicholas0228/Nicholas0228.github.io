@@ -20,6 +20,6 @@ I co-founded a volunteer interest group that addresses copyright issues related 
 
 **Feb 02, 2024**: Our paper on copyright authentication for diffusion models has been accepted at CVPR 2024. Read the full paper on [CVF](https://openaccess.thecvf.com/content/CVPR2024/papers/Wu_CGI-DM_Digital_Copyright_Authentication_for_Diffusion_Models_via_Contrasting_Gradient_CVPR_2024_paper.pdf). The code is available through our project *Revelio* on [GitHub](https://github.com/Nicholas0228/Revelio).
 
-**Dec 15, 2023**: [Mist-v2](https://link-to-mist-v2) has been released! It provides enhanced protection against LoRA-based attacks. More details are available on the [homepage](https://link-to-homepage).
+**Dec 15, 2023**: [Mist-v2](https://github.com/psyker-team/mist-v2) has been released! It provides enhanced protection against LoRA-based attacks. More details are available on the [homepage](https://psyker-team.github.io/index_en.html).
 
-**May 10, 2023**: Our adversarial watermarking project, *Mist*, is now [open-source on GitHub](https://github.com). Add watermarks to protect your artwork from unauthorized use!
+**May 10, 2023**: Our adversarial watermarking project, *Mist*, is now [open-source on GitHub](https://github.com/psyker-team/mist). Add watermarks to protect your artwork from unauthorized use!
