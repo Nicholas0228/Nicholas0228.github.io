@@ -28,7 +28,7 @@ redirect_from:
 Instructor: Steven Wu (CMU)  
 May. 2024 — Present  
 
-- Revealed the data leakage threat for large foundational models (personalized) by performing successful exact data extraction, providing strong evidence of potential infringements.  
+- Revealed the data leakage threat for large personalized generative models  by performing successful exact data extraction, providing strong evidence of potential infringements.  
 - Utilized guidance between pretrained and fine-tuned models to generate within high-density regions of the fine-tuned data probability distribution, enabling precise data extraction.
 
 **[ICML 2023 (Oral) & CVPR 2024]** Copyright Authentication and Imitation Prevention for Diffusion Models  
@@ -39,7 +39,7 @@ Instructor: Yang Hua (QUB), Hao Wang (LSU), Tao Song (SJTU)
 - Established a framework to craft adversarial watermarks against unauthorized diffusion model-based artwork mimicry by modeling adversarial attacks on diffusion models theoretically.
 
 
-# Publications
+# Selected Publications
 
 <ul>{% for post in site.publications reversed %}
     {% include archive-single-cv.html %}
