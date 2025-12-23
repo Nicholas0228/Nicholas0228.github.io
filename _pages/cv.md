@@ -9,22 +9,22 @@ redirect_from:
 {% include base_path %}
 
 # Education
-
-* M.S. in Shanghai Jiao Tong University, 2025 (expected)
+* PhD student in Rice University.
+* M.S. in Shanghai Jiao Tong University, 2025 
 * B.S. in Shanghai Jiao Tong University, 2022
 
 # Research Interests
 
 * Trustworthy AI: Mainly on copyright protection and authentication w./against AI personalization.
 * Privacy and Security: Adversarial attack and defense, data extraction, membship inference attack
-* Diffusion Models
+* Generative Modeling.
 
 # Research Experience
 
 
 
 
-**[Under Review]** Data Extraction on Personalized Generative Models  
+**[ICML 2025]** Data Extraction on Personalized Generative Models  
 Instructor: Steven Wu (CMU)  
 May. 2024 — Present  
 
