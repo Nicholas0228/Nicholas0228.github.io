@@ -1,14 +1,17 @@
 ---
-title: "Exploring Diffusion Models' Corruption Stage in Few-Shot Fine-Tuning and Mitigating with Bayesian Neural Networks"  
-collection: publications  
-category: conferences  
-permalink: /publications/2024-05-19-dm-corruption-stage-few-shot  
-excerpt: |
-    This paper explores diffusion models' corruption stage in few-shot fine-tuning and proposes using Bayesian Neural Networks to mitigate image quality degradation.
-date: 2024-05-19  
-venue: 'Under Review'  
-paperurl: 'https://arxiv.org/abs/2405.19931'  
-citation: |
-    Wu X*, Zhang J*, Hua Y, et al. (2024). "Exploring Diffusion Models' Corruption Stage in Few-Shot Fine-Tuning and Mitigating with Bayesian Neural Networks." <i>arXiv preprint arXiv:2405.19931</i>. (Co-First Author)
+title: "Exploring Diffusion Models' Corruption Stage in Few-Shot Fine-tuning and Mitigating with Bayesian Neural Networks"
+collection: publications
+category: conferences
+permalink: /publications/2024-05-19-dm-corruption-stage-few-shot
+excerpt: >-
+  We identify a corruption stage during few-shot diffusion fine-tuning and use Bayesian neural networks to improve fidelity, quality, and diversity without extra inference cost.
+date: 2026-03-06
+venue: "KDD 2026"
+venue_label: "KDD"
+authors: "<strong>Xiaoyu Wu*</strong>, Jiaru Zhang*, Yang Hua, Bohan Lyu, Hao Wang, Tao Song, Haibing Guan"
+paperurl: "https://arxiv.org/abs/2405.19931"
+codeurl: "https://github.com/Nicholas0228/BNN-Finetuning-DMs"
+citation: 'Wu, X.*, Zhang, J.*, Hua, Y., et al. (2026). "Exploring Diffusion Models&apos; Corruption Stage in Few-Shot Fine-tuning and Mitigating with Bayesian Neural Networks." <i>KDD 2026</i>.'
 ---
-This paper observes an interesting phenomenon during the few-shot fine-tuning process of diffusion models, termed the "corruption stage." In this stage, the model's output exhibits corrupted patterns, leading to a noticeable decrease in quality. We approximate this behavior using a Gaussian distribution and determine that the issue arises from the limited learned distribution. To address this, we apply Bayesian Neural Networks (BNNs) to force the diffusion models to learn a broader manifold, which has proven effective in resolving the corruption issue.
+
+During few-shot fine-tuning, image quality can improve, collapse into noisy patterns, and then recover with severe overfitting. We model this corruption stage as a narrowed learned distribution and mitigate it with Bayesian neural networks.

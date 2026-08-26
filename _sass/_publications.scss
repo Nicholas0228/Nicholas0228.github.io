@@ -1,0 +1,139 @@
+/* Research and publication listings */
+
+.research-intro {
+  max-width: 52rem;
+  margin: 0 0 2rem;
+
+  p {
+    margin: 0 0 0.8rem;
+    color: #3e464d;
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+}
+
+.research-scholar-link {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  padding: 0.42rem 0.68rem;
+  border: 1px solid #cbd4d8;
+  border-radius: 6px;
+  color: #176d64;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none !important;
+
+  &:hover,
+  &:focus {
+    border-color: #176d64;
+    background: #f3f9f7;
+  }
+}
+
+.publication-list {
+  border-top: 1px solid #dfe4e7;
+}
+
+.publication-entry {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.35rem 0;
+  border-bottom: 1px solid #e5e9eb;
+}
+
+.publication-entry__year {
+  padding-top: 0.16rem;
+  color: #176d64;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.publication-entry__body {
+  min-width: 0;
+
+  h2 {
+    margin: 0 0 0.42rem;
+    padding: 0;
+    border: 0;
+    font-size: 1.08rem;
+    line-height: 1.4;
+    letter-spacing: 0;
+
+    a {
+      color: #20252a;
+      text-decoration: none;
+
+      &:hover,
+      &:focus {
+        color: #176d64;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.publication-entry__venue,
+.publication-entry__authors,
+.publication-entry__summary {
+  margin: 0 !important;
+}
+
+.publication-entry__venue {
+  margin-bottom: 0.35rem !important;
+  color: #68727a;
+  font-size: 0.77rem;
+  font-weight: 700;
+}
+
+.publication-entry__authors {
+  margin-bottom: 0.45rem !important;
+  color: #59636b;
+  font-size: 0.88rem !important;
+  line-height: 1.5;
+}
+
+.publication-entry__summary {
+  max-width: 54rem;
+  margin-bottom: 0.65rem !important;
+  color: #444c53;
+  font-size: 0.9rem !important;
+  line-height: 1.6;
+}
+
+.publication-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.9rem;
+  margin-top: auto;
+
+  a {
+    display: inline-flex;
+    gap: 0.32rem;
+    align-items: center;
+    color: #176d64;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none !important;
+
+    &:hover,
+    &:focus {
+      color: #0d554d;
+      text-decoration: underline !important;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .publication-entry {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+    padding: 1.15rem 0;
+  }
+
+  .publication-entry__year {
+    padding-top: 0;
+  }
+}

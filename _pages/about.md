@@ -1,32 +1,93 @@
 ---
 permalink: /
-title: "Xiaoyu (Nicholas) Wu 吴晓宇"
+title: "Xiaoyu (Nicholas) Wu"
+excerpt: "Xiaoyu Wu is a PhD student at Carnegie Mellon University working on privacy, trustworthy AI, and generative models."
 author_profile: true
-redirect_from: 
+show_title: false
+redirect_from:
   - /about/
   - /about.html
 ---
-My research interests include copyright protection and authentication *for and against* AI personalization, as well as privacy and security topics such as adversarial attacks and defenses, data extraction, and membership inference.
+{% include base_path %}
 
-I’m also interested in generative modeling and am currently working with Prof. [Chen Wei](https://weichen582.github.io).
+<div class="home-shell">
+  <header class="home-hero">
+    <p class="home-hero__eyebrow">Xiaoyu (Nicholas) Wu · 吴晓宇</p>
+    <h1>Hi, I'm Xiaoyu Wu</h1>
+    <p class="home-hero__role">PhD student · Carnegie Mellon University</p>
+    <p class="home-hero__lead">
+      I work on trustworthy generative AI: privacy and copyright risks in diffusion and language
+      models, and methods that make generative systems more reliable.
+    </p>
+  </header>
 
-I co-founded a volunteer interest group focused on copyright issues related to image generative models. We develop software and provide technical support for AI copyright litigation on a volunteer basis. Feel free to email us if you’re interested or need assistance.
+  <section class="home-section home-news" aria-labelledby="news-heading">
+    <h2 id="news-heading">News</h2>
+    <ul>
+      <li>
+        <time datetime="2026-05">May 2026</time>
+        <span><span class="home-badge">new</span> Released <a href="https://a-little-hoof.github.io/dit-register/">DSR</a>, our work on taming outlier tokens in diffusion transformers.</span>
+      </li>
+      <li>
+        <time datetime="2026-03">Mar 2026</time>
+        <span><span class="home-badge">new</span> Our work on the corruption stage in few-shot diffusion fine-tuning was accepted to <strong>KDD 2026</strong>.</span>
+      </li>
+      <li>
+        <time datetime="2025-09">Sep 2025</time>
+        <span>Our work on extracting forgotten data after exact unlearning was accepted to <strong>NeurIPS 2025</strong>.</span>
+      </li>
+      <li>
+        <time datetime="2025-05">May 2025</time>
+        <span><a href="https://arxiv.org/abs/2410.03039">FineXtract</a>, our training-data extraction work for personalized diffusion models, was accepted to <strong>ICML 2025</strong>.</span>
+      </li>
+      <li>
+        <time datetime="2025-05">May 2025</time>
+        <span>Our team won all four tracks of the <a href="https://vectorinstitute.github.io/MIDST/">MIDST Challenge</a> at SaTML 2025.</span>
+      </li>
+    </ul>
+  </section>
 
+  <section class="home-section" aria-labelledby="selected-work-heading">
+    <h2 id="selected-work-heading">Selected work</h2>
 
+    {% assign featured_publications = site.publications | where: "featured", true | sort: "date" | reverse %}
+    <div class="publication-cards">
+      {% for post in featured_publications limit: 2 %}
+        {% assign feature_url = post.projecturl | default: post.paperurl %}
+        <article class="publication-card">
+          <a class="publication-card__visual" href="{{ feature_url }}">
+            <img src="{{ post.thumbnail | prepend: base_path }}" alt="{{ post.thumbnail_alt | escape }}" loading="lazy">
+          </a>
+          <div class="publication-card__body">
+            <p class="publication-card__venue">{{ post.venue_label | default: post.venue }} · {{ post.date | date: "%Y" }}</p>
+            <h3><a href="{{ feature_url }}">{{ post.title }}</a></h3>
+            <p class="publication-card__authors">{{ post.authors }}</p>
+            <p class="publication-card__summary">{{ post.excerpt }}</p>
+            <div class="publication-links" aria-label="Links for {{ post.title | escape }}">
+              {% if post.paperurl %}<a href="{{ post.paperurl }}">Paper</a>{% endif %}
+              {% if post.projecturl %}<a href="{{ post.projecturl }}">Project</a>{% endif %}
+              {% if post.codeurl %}<a href="{{ post.codeurl }}">Code</a>{% endif %}
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
 
-## News
+    <a class="home-see-all" href="{{ base_path }}/publications/">See all publications <span aria-hidden="true">→</span></a>
+  </section>
 
-
-**Sep. 2025**: Our new work on **data extraction after exact unlearning** was accepted to **NeurIPS 2025** and is available on [arXiv](https://arxiv.org/pdf/2505.24379). We show that even when a model is *exactly unlearned* , it can still leak the removed data **under realistic, real-world deployments**, enabling high-quality extraction in practice.
-
-**May 2025**: Our new work on training-data extraction for personalized diffusion models was accepted to **ICML 2025** and is available on [arXiv](https://arxiv.org/abs/2410.03039). We demonstrate high-quality training-data extraction using publicly available checkpoints on **Hugging Face**.
-
-
-
-**May, 2024**: Published new findings on mitigating quality degradation during few-shot fine-tuning of diffusion models [arXiv](https://arxiv.org/abs/2405.19931). We identified a phenomenon called the "corruption stage," where image quality abnormally degrades, and improved performance using BNNs.
-
-**Feb, 2024**: Our paper on copyright authentication for diffusion models has been accepted at CVPR 2024. Read the full paper on [CVF](https://openaccess.thecvf.com/content/CVPR2024/papers/Wu_CGI-DM_Digital_Copyright_Authentication_for_Diffusion_Models_via_Contrasting_Gradient_CVPR_2024_paper.pdf). The code is available through our project *Revelio* on [GitHub](https://github.com/Nicholas0228/Revelio).
-
-**Dec, 2023**: [Mist-v2](https://github.com/psyker-team/mist-v2) has been released! It provides enhanced protection against LoRA-based attacks. More details are available on the [homepage](https://psyker-team.github.io/index_en.html).
-
-**May, 2023**: Our adversarial watermarking project, *Mist*, is now [open-source on GitHub](https://github.com/psyker-team/mist). Add watermarks to protect your artwork from unauthorized use!
+  <section class="home-section home-about" aria-labelledby="about-heading">
+    <h2 id="about-heading">About</h2>
+    <p>
+      I'm a PhD student at Carnegie Mellon University, co-advised by
+      <a href="https://mireshghallah.github.io/">Prof. Niloofar Mireshghallah</a> and
+      <a href="https://zstevenwu.com/">Prof. Zhiwei Steven Wu</a>. My research spans data extraction,
+      machine unlearning, membership inference, copyright protection, and the robustness of generative models.
+      I also collaborate with <a href="https://weichen582.github.io/">Prof. Chen Wei</a> on generative modeling.
+    </p>
+    <p>
+      I co-founded a volunteer group focused on copyright issues surrounding image generation. We build
+      open-source tools and provide technical support for AI copyright litigation.
+    </p>
+  </section>
+</div>

@@ -1,36 +1,45 @@
 ---
 layout: archive
-title: "Publications"
+title: "Research"
 permalink: /publications/
 author_profile: true
 ---
 
-{% if site.author.googlescholar %}
-  <div class="wordwrap">You can also find my articles on <a href="{{site.author.googlescholar}}">my Google Scholar profile</a>.</div>
-{% endif %}
-
 {% include base_path %}
 
-<!-- New style rendering if publication categories are defined -->
-{% if site.publication_category %}
-  {% for category in site.publication_category  %}
-    {% assign title_shown = false %}
-    {% for post in site.publications reversed %}
-      {% if post.category != category[0] %}
-        {% continue %}
-      {% endif %}
-      {% unless title_shown %}
-        <h2>{{ category[1].title }}</h2><hr />
-        {% assign title_shown = true %}
-      {% endunless %}
-      {% include archive-single.html %}
-    {% endfor %}
+<div class="research-intro">
+  <p>
+    I study privacy, security, and copyright questions in generative models, alongside practical methods
+    for making diffusion models more reliable. My recent work focuses on data extraction, machine
+    unlearning, membership inference, and representation-space generation.
+  </p>
+  {% if site.author.googlescholar %}
+    <a class="research-scholar-link" href="{{ site.author.googlescholar }}">
+      <i class="ai ai-google-scholar" aria-hidden="true"></i>
+      Google Scholar
+    </a>
+  {% endif %}
+</div>
+
+{% assign publications = site.publications | sort: "date" | reverse %}
+<div class="publication-list">
+  {% for post in publications %}
+    <article class="publication-entry">
+      <div class="publication-entry__year">{{ post.date | date: "%Y" }}</div>
+      <div class="publication-entry__body">
+        <p class="publication-entry__venue">{{ post.venue }}</p>
+        <h2>
+          <a href="{{ post.paperurl | default: post.url }}">{{ post.title }}</a>
+        </h2>
+        {% if post.authors %}<p class="publication-entry__authors">{{ post.authors }}</p>{% endif %}
+        {% if post.excerpt %}<p class="publication-entry__summary">{{ post.excerpt }}</p>{% endif %}
+        <div class="publication-links" aria-label="Links for {{ post.title | escape }}">
+          {% if post.paperurl %}<a href="{{ post.paperurl }}"><i class="fas fa-file-lines" aria-hidden="true"></i> Paper</a>{% endif %}
+          {% if post.proceedingsurl %}<a href="{{ post.proceedingsurl }}"><i class="fas fa-book-open" aria-hidden="true"></i> Proceedings</a>{% endif %}
+          {% if post.projecturl %}<a href="{{ post.projecturl }}"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i> Project</a>{% endif %}
+          {% if post.codeurl %}<a href="{{ post.codeurl }}"><i class="fab fa-github" aria-hidden="true"></i> Code</a>{% endif %}
+        </div>
+      </div>
+    </article>
   {% endfor %}
-{% else %}
-  {% for post in site.publications reversed %}
-    {% include archive-single.html %}
-  {% endfor %}
-{% endif %}
-
-
-
+</div>

@@ -1,14 +1,22 @@
 ---
-title: "Revealing the Unseen: Guiding Personalized Diffusion Models to Expose Training Data"
+title: "Leveraging Model Guidance to Extract Training Data from Personalized Diffusion Models"
 collection: publications
 category: conferences
 permalink: /publication/2024-05-01-personalized-dm-data-extraction
-excerpt: 'This paper presents a study on extracting training data from personalized generative models using guidance.'
-date: 2024-10-03
-venue: 'Under Review'
-paperurl: 'https://arxiv.org/pdf/2410.03039'
-citation: |
-  Wu X, Zhang J, Wu S. (2024). "Revealing the Unseen: Guiding Personalized Diffusion Models to Expose Training Data." <i>arXiv preprint arXiv:2410.03039</i>.
+excerpt: >-
+  FineXtract uses the distribution shift between pretrained and personalized diffusion models to recover about 20% of fine-tuning data from real-world checkpoints.
+date: 2025-05-01
+venue: "ICML 2025"
+venue_label: "ICML"
+authors: "<strong>Xiaoyu Wu</strong>, Jiaru Zhang, Zhiwei Steven Wu"
+paperurl: "https://arxiv.org/abs/2410.03039"
+proceedingsurl: "https://proceedings.mlr.press/v267/wu25as.html"
+projecturl: "https://jiaruzhang.github.io/publication/finextract/"
+codeurl: "https://github.com/Nicholas0228/FineXtract"
+featured: true
+thumbnail: "/images/publications/finextract-results.jpg"
+thumbnail_alt: "Extracted images compared with corresponding FineXtract training images"
+citation: 'Wu, X., Zhang, J., and Wu, S. (2025). "Leveraging Model Guidance to Extract Training Data from Personalized Diffusion Models." <i>ICML 2025</i>.'
 ---
 
-This paper introduces FineXtract, a framework for extracting training data from fine-tuned diffusion models shared online. By approximating the model's distribution shift during fine-tuning and using clustering techniques, FineXtract can extract data with high quality, demonstrating potential risks of data leakage and copyright infringement.
+FineXtract approximates fine-tuning as a gradual shift from a pretrained diffusion model toward the fine-tuning distribution. Extrapolating along that shift guides generation toward high-probability regions of the private data, while clustering identifies likely training examples.

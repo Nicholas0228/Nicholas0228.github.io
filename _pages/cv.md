@@ -9,14 +9,14 @@ redirect_from:
 {% include base_path %}
 
 # Education
-* PhD student in Rice University.
+* PhD student at Carnegie Mellon University.
 * M.S. in Shanghai Jiao Tong University, 2025 
 * B.S. in Shanghai Jiao Tong University, 2022
 
 # Research Interests
 
 * Trustworthy AI: Mainly on copyright protection and authentication w./against AI personalization.
-* Privacy and Security: Adversarial attack and defense, data extraction, membship inference attack
+* Privacy and Security: Adversarial attacks and defenses, data extraction, and membership inference.
 * Generative Modeling.
 
 # Research Experience
