@@ -79,9 +79,10 @@ redirect_from:
   <section class="home-section home-about" aria-labelledby="about-heading">
     <h2 id="about-heading">About</h2>
     <p>
-      I'm a PhD student at Carnegie Mellon University, co-advised by
-      <a href="https://mireshghallah.github.io/">Prof. Niloofar Mireshghallah</a> and
-      <a href="https://zstevenwu.com/">Prof. Zhiwei Steven Wu</a>. My research spans data extraction,
+      I'm a PhD student at Carnegie Mellon University, where I work with
+      <a href="https://mireshghallah.github.io/">Prof. Niloofar Mireshghallah</a>,
+      <a href="https://zstevenwu.com/">Prof. Zhiwei Steven Wu</a>, and
+      <a href="https://andrewilyas.com/">Prof. Andrew Ilyas</a>. My research spans data extraction,
       machine unlearning, membership inference, copyright protection, and the robustness of generative models.
       I also collaborate with <a href="https://weichen582.github.io/">Prof. Chen Wei</a> on generative modeling.
     </p>
