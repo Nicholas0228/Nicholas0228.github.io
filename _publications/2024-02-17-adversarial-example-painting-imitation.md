@@ -12,6 +12,10 @@ authors: "Chumeng Liang*, <strong>Xiaoyu Wu*</strong>, Yang Hua, Jiaru Zhang, Yi
 paperurl: "https://proceedings.mlr.press/v202/liang23g.html"
 proceedingsurl: "https://proceedings.mlr.press/v202/liang23g.html"
 codeurl: "https://github.com/mist-project/mist"
+featured: true
+featured_order: 7
+thumbnail: "/images/publications/advdm-overview.png"
+thumbnail_alt: "Style transfer from clean artwork (top) and AdvDM-protected artwork (bottom), using the same sunflower source image"
 citation: 'Liang, C.*, Wu, X.*, Hua, Y., et al. (2023). "Adversarial Example Does Good: Preventing Painting Imitation from Diffusion Models via Adversarial Examples." <i>ICML 2023</i>. Oral presentation.'
 ---
 

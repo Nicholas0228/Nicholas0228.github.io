@@ -9,9 +9,8 @@ author_profile: true
 
 <div class="research-intro">
   <p>
-    I study privacy, security, and copyright questions in generative models, alongside practical methods
-    for making diffusion models more reliable. My recent work focuses on data extraction, machine
-    unlearning, membership inference, and representation-space generation.
+    I study generative models, with a focus on long-horizon generation, representation learning,
+    and reasoning. My earlier work explores privacy and copyright protection in generative models.
   </p>
   {% if site.author.googlescholar %}
     <a class="research-scholar-link" href="{{ site.author.googlescholar }}">
@@ -20,6 +19,8 @@ author_profile: true
     </a>
   {% endif %}
 </div>
+
+<p class="publication-hint">* Equal contribution</p>
 
 {% assign publications = site.publications | sort: "date" | reverse %}
 <div class="publication-list">

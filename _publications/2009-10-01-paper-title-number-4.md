@@ -14,6 +14,7 @@ proceedingsurl: "https://proceedings.mlr.press/v267/wu25as.html"
 projecturl: "https://jiaruzhang.github.io/publication/finextract/"
 codeurl: "https://github.com/Nicholas0228/FineXtract"
 featured: true
+featured_order: 6
 thumbnail: "/images/publications/finextract-results.jpg"
 thumbnail_alt: "Extracted images compared with corresponding FineXtract training images"
 citation: 'Wu, X., Zhang, J., and Wu, S. (2025). "Leveraging Model Guidance to Extract Training Data from Personalized Diffusion Models." <i>ICML 2025</i>.'

@@ -1,6 +1,6 @@
 ---
 layout: archive
-# title: "CV"
+title: "CV"
 permalink: /cv/
 author_profile: true
 redirect_from:
@@ -8,43 +8,65 @@ redirect_from:
 ---
 {% include base_path %}
 
-# Education
-* PhD student at Carnegie Mellon University.
-* M.S. in Shanghai Jiao Tong University, 2025 
-* B.S. in Shanghai Jiao Tong University, 2022
+[Download CV (PDF)]({{ base_path }}/files/Xiaoyu_Wu_CV.pdf){: .research-scholar-link }
 
-# Research Interests
+## Research Focus
 
-* Trustworthy AI: Mainly on copyright protection and authentication w./against AI personalization.
-* Privacy and Security: Adversarial attacks and defenses, data extraction, and membership inference.
-* Generative Modeling.
+Long-horizon generation, representation learning, and reasoning for generative models. Efficient training and inference; privacy and trustworthy machine learning.
 
-# Research Experience
+## Education
 
+**Carnegie Mellon University** · August 2026–September 2030 (expected)<br>
+Ph.D. student in Societal Computing, School of Computer Science<br>
+Software and Societal Systems Department<br>
+Advisors: [Zhiwei Steven Wu](https://zstevenwu.com/), [Niloofar Mireshghallah](https://mireshghallah.github.io/), and [Andrew Ilyas](https://andrewilyas.com/)
 
+**Rice University** · September 2025–June 2026<br>
+Ph.D. studies in Computer Science<br>
+Research with [Chen Wei](https://weichen582.github.io/)
 
+**Shanghai Jiao Tong University** · September 2022–March 2025<br>
+M.Sc. in Computer Science
 
-**[ICML 2025]** Data Extraction on Personalized Generative Models  
-Instructor: Steven Wu (CMU)  
-May. 2024 — Present  
+**Shanghai Jiao Tong University** · September 2018–June 2022<br>
+B.S. in Computer Science and Technology
 
-- Revealed the data leakage threat for large personalized generative models  by performing successful exact data extraction, providing strong evidence of potential infringements.  
-- Utilized guidance between pretrained and fine-tuned models to generate within high-density regions of the fine-tuned data probability distribution, enabling precise data extraction.
+## Publications
 
-**[ICML 2023 (Oral) & CVPR 2024]** Copyright Authentication and Imitation Prevention for Diffusion Models  
-Oct. 2022 — May. 2024  
-Instructor: Yang Hua (QUB), Hao Wang (LSU), Tao Song (SJTU)  
+[Google Scholar]({{ site.author.googlescholar }}) · * Equal contribution
 
-- Crafted a visualizable copyright authentication mechanism by modeling and analyzing the conceptual difference between fine-tuned and pretrained diffusion models theoretically.  
-- Established a framework to craft adversarial watermarks against unauthorized diffusion model-based artwork mimicry by modeling adversarial attacks on diffusion models theoretically.
+{% assign cv_publications = site.publications | sort: "date" | reverse %}
+<div class="publication-list">
+  {% for post in cv_publications %}
+    <article class="publication-entry">
+      <div class="publication-entry__year">{{ post.date | date: "%Y" }}</div>
+      <div class="publication-entry__body">
+        <p class="publication-entry__venue">{{ post.venue }}</p>
+        <h2><a href="{{ post.paperurl }}">{{ post.title }}</a></h2>
+        <p class="publication-entry__authors">{{ post.authors }}</p>
+        <p class="publication-entry__summary">{{ post.excerpt }}</p>
+        <div class="publication-links">
+          <a href="{{ post.paperurl }}">Paper</a>
+          {% if post.projecturl %}<a href="{{ post.projecturl }}">Project</a>{% endif %}
+          {% if post.codeurl %}<a href="{{ post.codeurl }}">Code</a>{% endif %}
+        </div>
+      </div>
+    </article>
+  {% endfor %}
+</div>
 
+## Awards
 
-# Selected Publications
+**MIDST Challenge, SaTML 2025 — Winning team, all four tracks.**<br>
+Membership inference on diffusion-based synthetic tabular data.<br>
+[Challenge results](https://vectorinstitute.github.io/MIDST/) · [Related work: TPDP 2025 workshop](https://tpdp.journalprivacyconfidentiality.org/2025/)
 
-<ul>{% for post in site.publications reversed %}
-    {% include archive-single-cv.html %}
-  {% endfor %}</ul>
+## Open Source Impact
 
-# Service
+**Mist — Founder and main developer.**<br>
+1,000+ combined GitHub stars across [Mist](https://github.com/psyker-team/mist) and [Mist-v2](https://github.com/psyker-team/mist-v2); featured in [The Verge](https://www.theverge.com/24063327/ai-art-protect-images-copyright-generators).<br>
+Social engagement: 16K reposts and 20K likes.
 
-* Reviewers for NeurIPS 2024, ICLR 2025.
+## Academic Service
+
+Reviewer: ECCV, ICML, NeurIPS, ICLR.

@@ -1,0 +1,122 @@
+# Newest updates first. Use year-only dates when the announcement month is unknown.
+# Historical announcements are preserved from the site's Git history.
+- date: "2026-09"
+  label: "Sep 2026"
+  new: true
+  text: >-
+    New preprints: <a href="https://arxiv.org/abs/2609.36364">Compress to Remember</a>
+    and <a href="https://arxiv.org/abs/2609.36599">Scaling Video Generation for Reasoning</a>,
+    on compact video memory and the compute cost of reasoning.
+
+- date: "2026-09"
+  label: "Sep 2026"
+  new: true
+  text: >-
+    Also new: <a href="https://arxiv.org/abs/2609.36348">Representation by Design in Generation</a>
+    and <a href="https://arxiv.org/abs/2609.38853">Visualizing Distribution Coverage</a>,
+    studying what generative models learn and which outputs they cover.
+
+- date: "2026-08"
+  label: "Aug 2026"
+  text: Started my PhD in the School of Computer Science at Carnegie Mellon University.
+
+- date: "2026-05"
+  label: "May 2026"
+  text: >-
+    Released <a href="https://a-little-hoof.github.io/dit-register/">DSR</a>,
+    our work on taming outlier tokens in diffusion transformers.
+
+- date: "2026-05"
+  label: "May 2026"
+  text: >-
+    <a href="https://openreview.net/forum?id=xYATz9HpE7">Selective Jacobi Decoding</a>,
+    our work on accelerating autoregressive normalizing flows, appears in TMLR 2026
+    with Featured Certification.
+
+- date: "2026-03"
+  label: "Mar 2026"
+  text: >-
+    Our work on the <a href="https://arxiv.org/abs/2405.19931">corruption stage in
+    few-shot diffusion fine-tuning</a> was accepted to KDD 2026.
+
+- date: "2025-10"
+  label: "Oct 2025"
+  text: >-
+    Our work on <a href="https://openaccess.thecvf.com/content/ICCV2025/html/Yang_Stealthy_Backdoor_Attack_in_Federated_Learning_via_Adaptive_Layer-wise_Gradient_ICCV_2025_paper.html">stealthy
+    backdoor attacks in federated learning</a> appears in ICCV 2025.
+
+- date: "2025-09"
+  label: "Sep 2025"
+  text: >-
+    <a href="https://arxiv.org/abs/2505.24379">Unlearned but Not Forgotten</a>,
+    our work on extracting removed data after exact unlearning, was accepted to NeurIPS 2025.
+
+- date: "2025-09"
+  label: "Sep 2025"
+  text: >-
+    Began PhD studies at Rice University, working with
+    <a href="https://weichen582.github.io/">Chen Wei</a> on generative modeling.
+
+- date: "2025-05"
+  label: "May 2025"
+  text: >-
+    <a href="https://arxiv.org/abs/2410.03039">FineXtract</a>, our training-data
+    extraction work for personalized diffusion models, was accepted to ICML 2025.
+
+- date: "2025-05"
+  label: "May 2025"
+  text: >-
+    Our team won all four tracks of the <a href="https://vectorinstitute.github.io/MIDST/">MIDST Challenge</a>
+    at SaTML 2025. Our <a href="https://arxiv.org/abs/2503.12008">membership-inference methods</a>
+    also appear at the TPDP 2025 workshop.
+
+- date: "2025"
+  label: "2025"
+  text: >-
+    <a href="https://arxiv.org/abs/2310.04687">Targeted Attack Improves Protection against
+    Unauthorized Diffusion Customization</a> appears at ICLR 2025 as a Spotlight paper.
+
+- date: "2024-10"
+  label: "Oct 2024"
+  text: >-
+    Released the <a href="https://arxiv.org/abs/2410.03039">FineXtract preprint</a>,
+    showing how model guidance can recover training images from personalized diffusion models.
+
+- date: "2024-05"
+  label: "May 2024"
+  text: >-
+    Released our <a href="https://arxiv.org/abs/2405.19931">corruption-stage preprint</a>,
+    identifying quality degradation in few-shot diffusion fine-tuning and mitigating it
+    with Bayesian neural networks.
+
+- date: "2024-02"
+  label: "Feb 2024"
+  text: >-
+    <a href="https://openaccess.thecvf.com/content/CVPR2024/html/Wu_CGI-DM_Digital_Copyright_Authentication_for_Diffusion_Models_via_Contrasting_Gradient_CVPR_2024_paper.html">CGI-DM</a>,
+    our work on copyright authentication for diffusion models, was accepted to CVPR 2024.
+    Code is available in <a href="https://github.com/Nicholas0228/Revelio">Revelio</a>.
+
+- date: "2024-01"
+  label: "Jan 2024"
+  text: >-
+    <a href="https://arxiv.org/abs/2311.12832">Toward Effective Protection against
+    Diffusion-Based Mimicry through Score Distillation</a> was accepted to ICLR 2024.
+
+- date: "2023-12"
+  label: "Dec 2023"
+  text: >-
+    Released <a href="https://github.com/psyker-team/mist-v2">Mist-v2</a>,
+    providing enhanced protection against LoRA-based imitation.
+
+- date: "2023-07"
+  label: "Jul 2023"
+  text: >-
+    <a href="https://proceedings.mlr.press/v202/liang23g.html">Adversarial Example Does Good</a>,
+    our work on preventing painting imitation with AdvDM, is an Oral paper at ICML 2023.
+
+- date: "2023-05"
+  label: "May 2023"
+  text: >-
+    Open-sourced <a href="https://github.com/psyker-team/mist">Mist</a>,
+    our artwork-protection tool. Read the <a href="https://arxiv.org/abs/2305.12683">paper</a>
+    on adversarial examples for diffusion models.

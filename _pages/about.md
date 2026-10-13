@@ -1,7 +1,7 @@
 ---
 permalink: /
 title: "Xiaoyu (Nicholas) Wu"
-excerpt: "Xiaoyu Wu is a PhD student at Carnegie Mellon University working on privacy, trustworthy AI, and generative models."
+excerpt: "Xiaoyu Wu is a PhD student at Carnegie Mellon University working on generative models, long-horizon generation, representation learning, and reasoning."
 author_profile: true
 show_title: false
 redirect_from:
@@ -16,47 +16,43 @@ redirect_from:
     <h1>Hi, I'm Xiaoyu Wu</h1>
     <p class="home-hero__role">PhD student · Carnegie Mellon University</p>
     <p class="home-hero__lead">
-      I work on trustworthy generative AI: privacy and copyright risks in diffusion and language
-      models, and methods that make generative systems more reliable.
+      I work on generative models, especially long-horizon video generation,
+      representation learning, and reasoning.
     </p>
   </header>
 
   <section class="home-section home-news" aria-labelledby="news-heading">
     <h2 id="news-heading">News</h2>
-    <ul>
-      <li>
-        <time datetime="2026-05">May 2026</time>
-        <span><span class="home-badge">new</span> Released <a href="https://a-little-hoof.github.io/dit-register/">DSR</a>, our work on taming outlier tokens in diffusion transformers.</span>
-      </li>
-      <li>
-        <time datetime="2026-03">Mar 2026</time>
-        <span><span class="home-badge">new</span> Our work on the corruption stage in few-shot diffusion fine-tuning was accepted to <strong>KDD 2026</strong>.</span>
-      </li>
-      <li>
-        <time datetime="2025-09">Sep 2025</time>
-        <span>Our work on extracting forgotten data after exact unlearning was accepted to <strong>NeurIPS 2025</strong>.</span>
-      </li>
-      <li>
-        <time datetime="2025-05">May 2025</time>
-        <span><a href="https://arxiv.org/abs/2410.03039">FineXtract</a>, our training-data extraction work for personalized diffusion models, was accepted to <strong>ICML 2025</strong>.</span>
-      </li>
-      <li>
-        <time datetime="2025-05">May 2025</time>
-        <span>Our team won all four tracks of the <a href="https://vectorinstitute.github.io/MIDST/">MIDST Challenge</a> at SaTML 2025.</span>
-      </li>
-    </ul>
+    <p class="home-news__hint" id="news-hint">Scroll for earlier updates <span aria-hidden="true">↓</span></p>
+    <div class="home-news__timeline" tabindex="0" role="region" aria-label="News timeline, latest updates first" aria-describedby="news-hint">
+      <ul>
+        {% for item in site.data.news %}
+          <li>
+            {% if item.date contains "-" %}<time datetime="{{ item.date }}">{{ item.label }}</time>{% else %}<span class="home-news__date">{{ item.label }}</span>{% endif %}
+            <span>{% if item.new %}<span class="home-badge">new</span> {% endif %}{{ item.text }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
   </section>
 
-  <section class="home-section" aria-labelledby="selected-work-heading">
-    <h2 id="selected-work-heading">Selected work</h2>
-
-    {% assign featured_publications = site.publications | where: "featured", true | sort: "date" | reverse %}
-    <div class="publication-cards">
-      {% for post in featured_publications limit: 2 %}
+  <section class="home-section" aria-labelledby="selected-work-heading" data-publication-carousel>
+    {% assign featured_publications = site.publications | where: "featured", true | sort: "featured_order" %}
+    <div class="home-section__heading">
+      <h2 id="selected-work-heading">Selected work</h2>
+      <div class="publication-controls" hidden>
+        <span class="publication-position" aria-live="polite" aria-atomic="true"></span>
+        <button type="button" class="publication-control" data-direction="-1" aria-label="Show newer papers" aria-controls="selected-publications" disabled><span aria-hidden="true">←</span></button>
+        <button type="button" class="publication-control" data-direction="1" aria-label="Show older papers" aria-controls="selected-publications"><span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+    <p class="publication-hint" id="publication-hint">Recent work first · Scroll or swipe to explore <span aria-hidden="true">→</span></p>
+    <div class="publication-cards" id="selected-publications" tabindex="0" role="region" aria-label="Selected publications, recent work first" aria-describedby="publication-hint">
+      {% for post in featured_publications %}
         {% assign feature_url = post.projecturl | default: post.paperurl %}
         <article class="publication-card">
           <a class="publication-card__visual" href="{{ feature_url }}">
-            <img src="{{ post.thumbnail | prepend: base_path }}" alt="{{ post.thumbnail_alt | escape }}" loading="lazy">
+            <img src="{{ post.thumbnail | prepend: base_path }}" alt="{{ post.thumbnail_alt | escape }}" loading="lazy" decoding="async">
           </a>
           <div class="publication-card__body">
             <p class="publication-card__venue">{{ post.venue_label | default: post.venue }} · {{ post.date | date: "%Y" }}</p>
@@ -82,13 +78,16 @@ redirect_from:
       I'm a PhD student at Carnegie Mellon University, where I work with
       <a href="https://mireshghallah.github.io/">Prof. Niloofar Mireshghallah</a>,
       <a href="https://zstevenwu.com/">Prof. Zhiwei Steven Wu</a>, and
-      <a href="https://andrewilyas.com/">Prof. Andrew Ilyas</a>. My research spans data extraction,
-      machine unlearning, membership inference, copyright protection, and the robustness of generative models.
-      I also collaborate with <a href="https://weichen582.github.io/">Prof. Chen Wei</a> on generative modeling.
+      <a href="https://andrewilyas.com/">Prof. Andrew Ilyas</a>. My research focuses on long-horizon generation,
+      representation learning, and reasoning for generative models.
+      Previously, I pursued PhD studies at Rice University (September 2025–June 2026),
+      working with <a href="https://weichen582.github.io/">Prof. Chen Wei</a>.
     </p>
     <p>
-      I co-founded a volunteer group focused on copyright issues surrounding image generation. We build
-      open-source tools and provide technical support for AI copyright litigation.
+      I founded <a href="https://github.com/psyker-team/mist">Mist</a>, an open-source tool for protecting
+      artwork from unauthorized diffusion-model imitation. Our team also won all four tracks of the
+      <a href="https://vectorinstitute.github.io/MIDST/">MIDST Challenge</a> at SaTML 2025.
     </p>
   </section>
 </div>
+<script src="{{ base_path }}/assets/js/publication-carousel.js" defer></script>

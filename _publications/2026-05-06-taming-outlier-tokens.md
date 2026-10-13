@@ -13,6 +13,7 @@ paperurl: "https://arxiv.org/abs/2605.05206"
 projecturl: "https://a-little-hoof.github.io/dit-register/"
 codeurl: "https://github.com/a-little-hoof/DSR"
 featured: true
+featured_order: 5
 thumbnail: "/images/publications/dsr-outlier-tokens.jpg"
 thumbnail_alt: "Layer-wise token maps showing the effect of Dual-Stage Registers"
 citation: 'Wu, X.*, Wang, Y.*, Fu, T.-J., et al. (2026). "Taming Outlier Tokens in Diffusion Transformers." <i>arXiv:2605.05206</i>.'
