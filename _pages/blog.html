@@ -11,6 +11,9 @@ blog: true
   {% assign blog_urls = blog_posts | map: "url" %}
   {% assign projects = site.publications | where_exp: "item", "item.projecturl != nil" | where_exp: "item", "item.projecturl != ''" %}
   {% assign entries = blog_posts | concat: projects | sort: "date" | reverse %}
+  {% assign pinned_entries = entries | where: "blog_pinned", true %}
+  {% assign remaining_entries = entries | where_exp: "item", "item.blog_pinned != true" %}
+  {% assign entries = pinned_entries | concat: remaining_entries %}
   {% for post in entries %}
   {% if post.projecturl and blog_urls contains post.projecturl %}{% continue %}{% endif %}
   {% assign entry_url = post.projecturl | default: post.url %}
