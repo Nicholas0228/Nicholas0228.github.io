@@ -12,6 +12,7 @@ authors: "<strong>Xiaoyu Wu</strong>, Jiaru Zhang, Zhiwei Steven Wu"
 paperurl: "https://arxiv.org/abs/2410.03039"
 proceedingsurl: "https://proceedings.mlr.press/v267/wu25as.html"
 projecturl: "https://jiaruzhang.github.io/publication/finextract/"
+tags: [diffusion, data-extraction, privacy]
 codeurl: "https://github.com/Nicholas0228/FineXtract"
 featured: true
 featured_order: 6

@@ -1,0 +1,426 @@
+{
+  "cases": [
+    {
+      "id": "cf-causal-05",
+      "title": "Preserving the contents through a lighting change",
+      "labels": [
+        "Ingredients",
+        "Adding",
+        "Lights dim",
+        "Lights return",
+        "Continue"
+      ],
+      "observation": "The yellow ingredients remain visible in PACC through the lighting change. Relax changes the contents of the bowl; Full AR largely repeats the initial action without the requested lighting transition.",
+      "caveats": "The dark interval is only partially dark. Hand shape and ingredient amounts still vary. This is a qualitative comparison, not evidence of exact physical-state preservation.",
+      "family": "cf",
+      "category": "causal",
+      "prompts": [
+        "A static top-down shot captures a stainless steel mixing bowl filled with a mound of white flour resting on a light wooden countertop, while a hand tilts a small brown jar to pour granular yeast into the powder.",
+        "The bright overhead kitchen lights suddenly flicker and begin to dim, causing the illumination on the wooden table to waver. Shadows around the metal bowl deepen rapidly, and the white flour loses its brightness as the room starts to darken.",
+        "The lights cut out completely, plunging the scene into near-total darkness where the stainless steel bowl and the hand holding the jar are barely visible as faint, ghostly outlines against the black background.",
+        "The overhead lights flicker back to life, gradually restoring brightness to the kitchen counter. The wooden grain of the table becomes clear again, and the white flour in the bowl slowly regains its stark contrast as the illumination stabilizes.",
+        "With the lighting fully recovered, the camera clearly shows a hand mixing the granular yeast into the large metal bowl of white flour, incorporating the ingredient into the powder on the wooden table."
+      ],
+      "duration": 26.0625,
+      "seed": 0,
+      "methods": {
+        "relax": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/4ba669d5ebfe0d5bed51b0ff9b23eac43d2d8af2/videos/cf-causal-05-Relax.mp4",
+          "poster": "assets/posters/cf-causal-05-Relax.jpg",
+          "sha256": "9da3c1f12366b697bcf331bca156068ed8d1961f7ccdfcc3ee6d8d7d7e1eadae"
+        },
+        "pacc": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/4ba669d5ebfe0d5bed51b0ff9b23eac43d2d8af2/videos/cf-causal-05-Ours.mp4",
+          "poster": "assets/posters/cf-causal-05-Ours.jpg",
+          "sha256": "e6074e4d9de3a7e2ad6c5913fe43eb6efc159a2d29f441c98757b9d1f452d5b7"
+        },
+        "full": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/4ba669d5ebfe0d5bed51b0ff9b23eac43d2d8af2/videos/cf-causal-05-FullAR.mp4",
+          "poster": "assets/posters/cf-causal-05-FullAR.jpg",
+          "sha256": "a3f2877d7b101d3433fe208f02fbdc49ff1fb55a567977c6159f80492f39942f"
+        }
+      },
+      "group": "reviewed",
+      "source": "https://github.com/a-little-hoof/video-compress/blob/12b5dbab8c76fbba6554de85af5dc49f9a1a2a4f/website/VIDEOS.md"
+    }
+  ],
+  "demos": [
+    {
+      "id": "tea-rcm-wooden-robot",
+      "title": "A wooden toy raises its arms and bows",
+      "shortTitle": "Wooden toy",
+      "tab": "Wooden toy / Causal-rCM",
+      "labels": [
+        "Standing",
+        "One arm",
+        "Both arms",
+        "Bow",
+        "Upright"
+      ],
+      "focusTime": 19.5,
+      "focus": "After the bow",
+      "observation": "PACC retains the black eyes and wooden appearance through the arm raises and bow. Relax follows the broad actions too, but steps forward and develops glowing blue eyes around 19 seconds, with a blue detail remaining afterward.",
+      "caveats": "Small gripper and joint details change in both videos. PACC straightens early and adds a brief arm lift. This is a selected appearance-and-action comparison, not a degradation-free result or a disappearance-and-return memory test.",
+      "family": "rcm",
+      "seed": 1,
+      "prompts": [
+        "A small articulated wooden toy robot stands on a plain workbench. It has a square wooden head, two round painted black eyes, a rectangular torso and simple hinged arms and legs. Both arms hang at its sides. The full toy is visible in a fixed front view. One continuous realistic shot with smooth natural movement, soft daylight and a fixed camera.",
+        "The wooden toy robot slowly raises its right arm out to shoulder height, keeping its other arm lowered and its feet planted on the workbench. One continuous realistic shot with smooth natural movement, soft daylight and a fixed camera.",
+        "The wooden robot raises its other arm too, holding both arms out wide at shoulder height in a clear welcoming pose. One continuous realistic shot with smooth natural movement, soft daylight and a fixed camera.",
+        "The wooden robot lowers both arms to its sides, then bends gently forward at the hips in a small bow, keeping both feet on the bench. One continuous realistic shot with smooth natural movement, soft daylight and a fixed camera.",
+        "The wooden robot straightens up from its bow and stands upright again with both arms by its sides, facing the viewer. One continuous realistic shot with smooth natural movement, soft daylight and a fixed camera."
+      ],
+      "duration": 26.0625,
+      "methods": {
+        "relax": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/7f23b0d6e869dd2cff7b1c3ad9bbc23b0509afc4/tea-quality-demos-20261003/videos/tea-rcm-wooden-robot/relax.mp4",
+          "poster": "assets/demos/tea-rcm-wooden-robot-relax.jpg",
+          "sha256": "bbccbf498a25cb89321adbd11b339dd837c026cad0ace8c6fb74a834f60d8da5",
+          "stills": {
+            "start": "assets/demos/tea-rcm-wooden-robot-relax-start.jpg",
+            "middle": "assets/demos/tea-rcm-wooden-robot-relax-middle.jpg",
+            "end": "assets/demos/tea-rcm-wooden-robot-relax-end.jpg"
+          }
+        },
+        "pacc": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/7f23b0d6e869dd2cff7b1c3ad9bbc23b0509afc4/tea-quality-demos-20261003/videos/tea-rcm-wooden-robot/pacc.mp4",
+          "poster": "assets/demos/tea-rcm-wooden-robot-pacc.jpg",
+          "sha256": "9bc28e3db4048706fbd17f18d1b0e4716a43470f596fc4d03195540bcf7079be",
+          "stills": {
+            "start": "assets/demos/tea-rcm-wooden-robot-pacc-start.jpg",
+            "middle": "assets/demos/tea-rcm-wooden-robot-pacc-middle.jpg",
+            "end": "assets/demos/tea-rcm-wooden-robot-pacc-end.jpg"
+          }
+        }
+      },
+      "source": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/7f23b0d6e869dd2cff7b1c3ad9bbc23b0509afc4/tea-quality-demos-20261003/manifest.json"
+    },
+    {
+      "id": "cf-potted-flower",
+      "title": "A flower in soft window light",
+      "shortTitle": "Flower",
+      "tab": "Flower / Causal Forcing",
+      "labels": [
+        "Still",
+        "Breeze left",
+        "Upright",
+        "Breeze right",
+        "Settling"
+      ],
+      "focusTime": 23,
+      "focus": "Late appearance",
+      "observation": "PACC maintains the yellow blossom, leaves, blue pot and framing with restrained motion. Relax shows larger changes in blossom size and petal arrangement late in the same-seed clip.",
+      "caveats": "This is an appearance example with subtle movement, not a strong action or memory test. Exact left/right timing is not reliably followed, and the pot is partly cropped from the beginning. It does not establish an overall quality ranking.",
+      "family": "cf",
+      "seed": 1,
+      "prompts": [
+        "A single yellow daisy with a dark round center and green leaves grows in a small blue ceramic pot on a windowsill. A fixed close-up camera keeps the entire blossom and pot visible in soft morning daylight in one continuous shot. The upright flower is nearly still, with only a faint movement of its petals.",
+        "A single yellow daisy with a dark round center and green leaves grows in a small blue ceramic pot on a windowsill. A fixed close-up camera keeps the entire blossom and pot visible in soft morning daylight in one continuous shot. A gentle breeze bends the flexible stem slightly to the left.",
+        "A single yellow daisy with a dark round center and green leaves grows in a small blue ceramic pot on a windowsill. A fixed close-up camera keeps the entire blossom and pot visible in soft morning daylight in one continuous shot. The breeze eases and the blossom slowly returns to its upright position.",
+        "A single yellow daisy with a dark round center and green leaves grows in a small blue ceramic pot on a windowsill. A fixed close-up camera keeps the entire blossom and pot visible in soft morning daylight in one continuous shot. Another light breeze bends the stem slightly to the right while the pot remains still.",
+        "A single yellow daisy with a dark round center and green leaves grows in a small blue ceramic pot on a windowsill. A fixed close-up camera keeps the entire blossom and pot visible in soft morning daylight in one continuous shot. The blossom settles upright again and its yellow petals become nearly still."
+      ],
+      "duration": 26.0625,
+      "methods": {
+        "relax": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/e91d64e77ba9f1e8841bef91d1d7c544f46771f2/natural-transition-demos-20261001/videos/cf-potted-flower/relax.mp4",
+          "poster": "assets/demos/cf-potted-flower-relax.jpg",
+          "sha256": "34478b45c76b69e8319e62a61174b04563c8a807b0e73add73a52e9767f69532",
+          "stills": {
+            "start": "assets/demos/cf-potted-flower-relax-start.jpg",
+            "middle": "assets/demos/cf-potted-flower-relax-middle.jpg",
+            "end": "assets/demos/cf-potted-flower-relax-end.jpg"
+          }
+        },
+        "pacc": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/e91d64e77ba9f1e8841bef91d1d7c544f46771f2/natural-transition-demos-20261001/videos/cf-potted-flower/pacc.mp4",
+          "poster": "assets/demos/cf-potted-flower-pacc.jpg",
+          "sha256": "3c4b7dc5fb98b2563965be43ec33a61caee32647921bdb7ca2255d421d2baf91",
+          "stills": {
+            "start": "assets/demos/cf-potted-flower-pacc-start.jpg",
+            "middle": "assets/demos/cf-potted-flower-pacc-middle.jpg",
+            "end": "assets/demos/cf-potted-flower-pacc-end.jpg"
+          }
+        }
+      },
+      "source": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/e91d64e77ba9f1e8841bef91d1d7c544f46771f2/natural-transition-demos-20261001/manifest.json"
+    },
+    {
+      "id": "cf-window-portrait",
+      "title": "A portrait turns toward the window",
+      "shortTitle": "Window portrait",
+      "tab": "Window portrait / Causal Forcing",
+      "labels": [
+        "Window",
+        "Turn",
+        "Smile",
+        "Look down",
+        "Window again"
+      ],
+      "focusTime": 23,
+      "focus": "Return to the window",
+      "observation": "The subject, blue sweater and room remain recognizable through the turns and smile. PACC keeps a steadier neckline; the matched Relax clip widens the collar and changes the framing late in the sequence.",
+      "caveats": "Both clips show teeth instead of the requested closed-mouth smile, and the framing moves slightly. This is an appearance comparison, not a disappearance-and-return memory test.",
+      "family": "cf",
+      "seed": 1,
+      "prompts": [
+        "A medium close-up of one woman wearing a blue sweater, seated beside a bright window. The camera remains fixed, with soft natural daylight and a simple room in the background. She looks out through the window.",
+        "A medium close-up of one woman wearing a blue sweater, seated beside a bright window. The camera remains fixed, with soft natural daylight and a simple room in the background. She slowly turns her head to face the camera.",
+        "A medium close-up of one woman wearing a blue sweater, seated beside a bright window. The camera remains fixed, with soft natural daylight and a simple room in the background. She looks at the camera and gives a gentle closed-mouth smile.",
+        "A medium close-up of one woman wearing a blue sweater, seated beside a bright window. The camera remains fixed, with soft natural daylight and a simple room in the background. She lowers her gaze toward her lap.",
+        "A medium close-up of one woman wearing a blue sweater, seated beside a bright window. The camera remains fixed, with soft natural daylight and a simple room in the background. She slowly turns her head back toward the window."
+      ],
+      "duration": 26.0625,
+      "methods": {
+        "relax": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/e91d64e77ba9f1e8841bef91d1d7c544f46771f2/natural-transition-demos-20261001/videos/cf-window-portrait/relax.mp4",
+          "poster": "assets/demos/cf-window-portrait-relax.jpg",
+          "sha256": "3b18ce942319908fbfc4c18bc21316e320d7636ea295fcd7762d9a70a3f76c6e",
+          "stills": {
+            "start": "assets/demos/cf-window-portrait-relax-start.jpg",
+            "middle": "assets/demos/cf-window-portrait-relax-middle.jpg",
+            "end": "assets/demos/cf-window-portrait-relax-end.jpg"
+          }
+        },
+        "pacc": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/e91d64e77ba9f1e8841bef91d1d7c544f46771f2/natural-transition-demos-20261001/videos/cf-window-portrait/pacc.mp4",
+          "poster": "assets/demos/cf-window-portrait-pacc.jpg",
+          "sha256": "45f554227057648d2c6841bb90329e19c4dee78eda9c579bd21cd3fa4ffa232a",
+          "stills": {
+            "start": "assets/demos/cf-window-portrait-pacc-start.jpg",
+            "middle": "assets/demos/cf-window-portrait-pacc-middle.jpg",
+            "end": "assets/demos/cf-window-portrait-pacc-end.jpg"
+          }
+        }
+      },
+      "source": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/e91d64e77ba9f1e8841bef91d1d7c544f46771f2/natural-transition-demos-20261001/manifest.json"
+    },
+    {
+      "id": "phase-cf-arm-flow",
+      "title": "Five poses in one continuous shot",
+      "shortTitle": "Arm sequence",
+      "tab": "Arm sequence / Causal Forcing",
+      "labels": [
+        "Open arms",
+        "Crossed arms",
+        "Hands on hips",
+        "Palms together",
+        "Arms down"
+      ],
+      "focusTime": 23,
+      "focus": "Final pose",
+      "observation": "PACC follows the main sequence: open arms, crossed forearms, hands on hips, palms joined, then arms lowered. Relax also follows the sequence well, but adds extra crossed-arm motions at the end. PACC holds the lowered-arm pose longer.",
+      "caveats": "Fine finger geometry is simplified, the subject scale shifts mildly and the opening arm lift oscillates. PACC adds an unrequested low hand clasp around 25 seconds. This is an action example, not a clear overall quality win or a memory-recovery test.",
+      "family": "cf",
+      "seed": 1,
+      "prompts": [
+        "A woman with dark hair tied back wears a light blue long-sleeved top and dark trousers in a bright plain exercise studio. In a fixed medium-wide view from head to knees, she gently opens both arms out to the sides at shoulder height. There is space around her arms. One continuous realistic shot, smooth natural movement, soft daylight, fixed camera.",
+        "The same woman slowly brings her arms inward and folds them across her chest. Her right forearm rests over her left forearm. She holds the clearly crossed-arm pose while facing the camera. One continuous realistic shot, smooth natural movement, soft daylight, fixed camera.",
+        "She unfolds her arms and places both hands on her hips, with her elbows pointing out to the sides. She holds this hands-on-hips pose while remaining in the same place. One continuous realistic shot, smooth natural movement, soft daylight, fixed camera.",
+        "She lifts both hands from her hips and joins her palms together in front of her chest. Her elbows relax downward as she holds this prayer-like pose. One continuous realistic shot, smooth natural movement, soft daylight, fixed camera.",
+        "She gently separates her palms and lowers both arms to her sides. She finishes standing comfortably facing the camera, with the same blue top and dark trousers. One continuous realistic shot, smooth natural movement, soft daylight, fixed camera."
+      ],
+      "duration": 26.0625,
+      "methods": {
+        "relax": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/926cc8657bf149c0567612c563b883fb10ef3616/distinct-phase-candidates-20261003/videos/phase-cf-arm-flow/relax.mp4",
+          "poster": "assets/demos/phase-cf-arm-flow-relax.jpg",
+          "sha256": "955931e1f0a06b6f78a1314293430c99db801c099bb6fa00daa1619b48528938",
+          "stills": {
+            "start": "assets/demos/phase-cf-arm-flow-relax-start.jpg",
+            "middle": "assets/demos/phase-cf-arm-flow-relax-middle.jpg",
+            "end": "assets/demos/phase-cf-arm-flow-relax-end.jpg"
+          }
+        },
+        "pacc": {
+          "url": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/926cc8657bf149c0567612c563b883fb10ef3616/distinct-phase-candidates-20261003/videos/phase-cf-arm-flow/pacc.mp4",
+          "poster": "assets/demos/phase-cf-arm-flow-pacc.jpg",
+          "sha256": "c4bcbc6ef02f673a9f4dcfdc622f56657f5654e583d11845c4a07fab4b1156f9",
+          "stills": {
+            "start": "assets/demos/phase-cf-arm-flow-pacc-start.jpg",
+            "middle": "assets/demos/phase-cf-arm-flow-pacc-middle.jpg",
+            "end": "assets/demos/phase-cf-arm-flow-pacc-end.jpg"
+          }
+        }
+      },
+      "source": "https://huggingface.co/datasets/Nicholas0228/PACC-Website-Videos/resolve/926cc8657bf149c0567612c563b883fb10ef3616/distinct-phase-candidates-20261003/manifest.json"
+    }
+  ],
+  "results": {
+    "rcm": [
+      [
+        "Infinity-RoPE",
+        31.83,
+        23.83,
+        60.92,
+        38.86,
+        80.09
+      ],
+      [
+        "Relax Forcing",
+        27.1,
+        36.21,
+        65.74,
+        43.01,
+        81
+      ],
+      [
+        "Rolling Sink",
+        15.96,
+        4.76,
+        42.25,
+        20.99,
+        77.43
+      ],
+      [
+        "Deep Forcing",
+        31.57,
+        34.56,
+        49.2,
+        38.44,
+        79.94
+      ],
+      [
+        "MemRoPE",
+        31.97,
+        31.01,
+        60.27,
+        41.08,
+        79.64
+      ],
+      [
+        "PACC (Ours)",
+        40.6,
+        41,
+        67.32,
+        49.64,
+        80.5
+      ]
+    ],
+    "cf": [
+      [
+        "Infinity-RoPE",
+        49.92,
+        52.82,
+        65.28,
+        56,
+        83.04
+      ],
+      [
+        "Relax Forcing",
+        51.88,
+        50.71,
+        73.17,
+        58.58,
+        83.79
+      ],
+      [
+        "Rolling Sink",
+        50.52,
+        44.9,
+        62.06,
+        52.49,
+        82.16
+      ],
+      [
+        "Deep Forcing",
+        45.39,
+        51.69,
+        62.42,
+        53.17,
+        83.14
+      ],
+      [
+        "MemRoPE",
+        44.78,
+        52.16,
+        67.17,
+        54.7,
+        83.55
+      ],
+      [
+        "PACC (Ours)",
+        55.7,
+        54.15,
+        75.46,
+        61.77,
+        83.57
+      ]
+    ]
+  },
+  "ablations": {
+    "training": {
+      "x": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        10
+      ],
+      "memory": [
+        47.26,
+        56.33,
+        53.08,
+        52.02,
+        47.78,
+        50.02,
+        46.37
+      ],
+      "imaging": [
+        67.64,
+        65.21,
+        67.18,
+        67.12,
+        67.21,
+        68.18,
+        68.38
+      ],
+      "axis": "Optimizer updates (thousands)"
+    },
+    "compression": {
+      "x": [
+        4,
+        6,
+        8,
+        10
+      ],
+      "memory": [
+        49.61,
+        46.4,
+        47.51,
+        56.33
+      ],
+      "imaging": [
+        68.29,
+        68.43,
+        65.64,
+        65.21
+      ],
+      "axis": "Compression factor"
+    }
+  },
+  "showcase": {
+    "id": "tea-rcm-wooden-robot",
+    "title": "A wooden toy in motion"
+  },
+  "phaseStarts": [
+    0,
+    5.0625,
+    10.3125,
+    15.5625,
+    20.8125
+  ],
+  "paper": "https://arxiv.org/abs/2609.36364",
+  "paperVersion": "v1",
+  "gallery": "https://nicholas0228-pacc-demo-comparison.static.hf.space/",
+  "provenance": {
+    "paperWebsiteCommit": "12b5dbab8c76fbba6554de85af5dc49f9a1a2a4f",
+    "results": "Paper Table 1; ablations Tables 4-7",
+    "media": "Original MP4 bytes at pinned Hugging Face revisions",
+    "policy": "CR10 / 5k, selected whole compressed block, sink2/recent1. Not strict M=1.",
+    "budgets": "PACC 7956 versus Relax 6240 active past KV tokens per layer; unequal policy budgets.",
+    "sourceInventory": "https://github.com/a-little-hoof/video-compress/blob/12b5dbab8c76fbba6554de85af5dc49f9a1a2a4f/website/videos.json"
+  }
+}

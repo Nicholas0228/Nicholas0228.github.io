@@ -1,0 +1,93 @@
+---
+layout: project
+title: "Compress to Remember"
+subtitle: "Learning Compact Memory via On-Policy Distillation for Long Video Generation"
+date: 2026-09-28
+permalink: /blog/compress-to-remember/
+blog: true
+entry_type: "Project page"
+excerpt: "Prediction-Aligned Context Compaction learns what a frozen video generator should remember. Explore the training method, compact-memory inference, and matched video comparisons."
+tags:
+  - video generation
+  - memory
+  - distillation
+author_profile: false
+read_time: false
+share: false
+comments: false
+---
+
+<main id="main">
+<section class="paper-heading wide">
+  <h1>Compress to Remember</h1><p class="paper-subtitle">Learning Compact Memory via On-Policy Distillation<br class="desktop"> for Long Video Generation</p>
+  <p class="authors"><a href="https://nicholas0228.github.io/">Xiaoyu Wu<sup>1,*</sup></a><a href="https://www.whguo.me/">Weihang Guo<sup>2,*</sup></a><a href="https://a-little-hoof.github.io/">Yifei Wang<sup>2,*</sup></a><a href="https://www.linkedin.com/in/xinze">Xinze Feng<sup>1</sup></a><a href="https://profiles.rice.edu/faculty/lydia-e-kavraki">Lydia E. Kavraki<sup>2</sup></a><a href="https://zstevenwu.com/">Zhiwei Steven Wu<sup>1</sup></a></p>
+  <p class="affiliations"><span><sup>1</sup> Carnegie Mellon University</span><span><sup>2</sup> Rice University</span><span>* Equal contribution</span></p>
+  <div class="paper-links"><a href="https://arxiv.org/abs/2609.36364" target="_blank" rel="noopener"><img src="assets/icons/file-text.svg" alt="">arXiv</a><a href="paper.pdf" target="_blank" rel="noopener"><img src="assets/icons/download.svg" alt="">PDF</a></div>
+</section>
+
+<section class="wide teaser" aria-label="Matched generated frames">
+  <div class="teaser-top"><h2 id="teaser-title">A wooden toy in motion</h2><a href="#comparisons">Browse more results</a></div>
+  <div id="teaser-player" class="teaser-player"></div>
+</section>
+<section class="abstract prose">
+  <h2>Abstract</h2>
+  <p>Long video generation needs a memory of what happened earlier. Retaining the entire history is expensive; selecting a few frames can discard useful information. <strong>Prediction-Aligned Context Compaction (PACC)</strong> learns a small set of memory tokens that preserve what a frozen video generator needs to predict next.</p>
+  <p>We train the compressor to match the generator's full-history predictions on its own generated continuations. At inference, completed video blocks become a compact memory archive. The same generator retrieves from this archive as the video grows, improving memory consistency on both Causal-rCM and Causal Forcing.</p>
+</section>
+<section class="wide section" id="method">
+  <h2>Method</h2>
+  <p class="intro">Keep the generator. Learn what it should remember.</p>
+  <h3 class="subsection-title rollout-heading">Data rollout</h3>
+  <p class="figure-caption rollout-summary">The teacher generates the initial chunks; the student continues from compressed memory and appends each new chunk to the rollout prefix H.</p>
+  <div class="story" id="rollout-story" aria-label="Training rollout explanation">
+    <div class="story-head"><button class="icon-button previous" aria-label="Previous rollout step" title="Previous step"><img src="assets/icons/chevron-left.svg" alt=""></button><div class="story-words"><h3></h3><p></p></div><button class="icon-button next" aria-label="Next rollout step" title="Next step"><img src="assets/icons/chevron-right.svg" alt=""></button></div>
+    <div class="story-stage" id="rollout-stage"></div>
+    <div class="story-controls"><button class="icon-button toggle" aria-label="Play rollout animation" title="Play animation"><img src="assets/icons/play.svg" alt=""></button><div class="story-progress"></div><output></output></div>
+  </div>
+  <h3 class="subsection-title training-heading">Training</h3>
+  <p class="figure-caption training-summary">Match predictions along that rollout.</p>
+  <p class="reading">Instead of reconstructing old frames, we ask a more useful question: <strong>can the model predict the same next step from a compact memory?</strong> Only the compressor is trained.</p>
+  <p class="reading">At each denoising state, ask the frozen teacher what it would predict with the full prefix. Match that prediction, then average the losses across the rollout to train the compressor.</p>
+  <div class="story" id="training-story" aria-label="Training explanation">
+    <div class="story-head"><button class="icon-button previous" aria-label="Previous training step" title="Previous step"><img src="assets/icons/chevron-left.svg" alt=""></button><div class="story-words"><h3></h3><p></p></div><button class="icon-button next" aria-label="Next training step" title="Next step"><img src="assets/icons/chevron-right.svg" alt=""></button></div>
+    <div class="story-stage" id="training-stage"></div>
+    <div class="story-controls"><button class="icon-button toggle" aria-label="Play training animation" title="Play animation"><img src="assets/icons/play.svg" alt=""></button><div class="story-progress"></div><output></output></div>
+  </div>
+</section>
+<section class="wide section" id="inference">
+  <h3 class="generation-heading">Generation</h3>
+  <p class="figure-caption generation-summary">From short training videos to long generation</p>
+  <p class="reading">Once a block has been generated, compress it and keep its memory. For each new chunk, retrieve a memory block and retain the raw beginning and recent frame as anchors.</p>
+  <div class="story" id="inference-story" aria-label="Inference explanation">
+    <div class="story-head"><button class="icon-button previous" aria-label="Previous inference step" title="Previous step"><img src="assets/icons/chevron-left.svg" alt=""></button><div class="story-words"><h3></h3><p></p></div><button class="icon-button next" aria-label="Next inference step" title="Next step"><img src="assets/icons/chevron-right.svg" alt=""></button></div>
+    <div class="story-stage" id="inference-stage"></div>
+    <div class="story-controls"><button class="icon-button toggle" aria-label="Play inference animation" title="Play animation"><img src="assets/icons/play.svg" alt=""></button><div class="story-progress"></div><output></output></div>
+  </div>
+</section>
+<section class="wide section" id="comparisons">
+  <h2>Results</h2>
+  <div class="case-gallery" id="case-tabs" role="group" aria-label="Video examples"></div>
+  <div class="comparison-heading"><h3 id="comparison-title"></h3><span id="comparison-family"></span></div>
+  <div id="comparison-player"></div>
+</section>
+<section class="wide section" id="results">
+  <h2>Memory improves on two frozen backbones</h2>
+  <p class="reading">With the generator frozen, PACC improves memory consistency on both Causal-rCM and Causal Forcing.</p>
+  <figure class="mbench-results" aria-labelledby="mbench-title">
+    <div class="mbench-chart-heading"><p class="mbench-axis-title" id="mbench-title">MBench M-score &uarr;<span id="result-axis-range" class="mbench-axis-range"></span></p><button class="icon-button" id="replay-results" aria-label="Replay MBench animation" title="Replay MBench animation"><img src="assets/icons/rotate-ccw.svg" alt=""></button></div>
+    <ul class="mbench-legend" id="result-legend" aria-label="Methods"></ul>
+    <div class="mbench-charts" id="result-charts"></div>
+  </figure>
+</section>
+<section class="prose section" id="citation">
+  <h2>Citation</h2>
+  <div class="citation"><button class="icon-button" id="copy-citation" aria-label="Copy BibTeX" title="Copy BibTeX"><img src="assets/icons/copy.svg" alt=""></button><pre id="bibtex">@article{wu2026compress,
+  title={Compress to Remember: Learning Compact Memory via
+    On-Policy Distillation for Long Video Generation},
+  author={Wu, Xiaoyu and Guo, Weihang and Wang, Yifei and
+    Feng, Xinze and Kavraki, Lydia E. and Wu, Zhiwei Steven},
+  journal={arXiv preprint arXiv:2609.36364},
+  year={2026}
+}</pre><span id="copy-status" role="status"></span></div>
+</section>
+</main>

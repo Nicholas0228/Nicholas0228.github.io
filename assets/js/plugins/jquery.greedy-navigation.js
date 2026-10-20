@@ -15,15 +15,16 @@ var breaks = [];
 function updateNav() {
 
   var availableSpace = $btn.hasClass('hidden') ? $nav.width() : $nav.width() - $btn.width() - 30;
+  var $movableLinks = $vlinks.children('*:not(.masthead__menu-item--lg)');
 
   // The visible list is overflowing the nav
-  if($vlinks.width() > availableSpace) {
+  if($vlinks.width() > availableSpace && $movableLinks.length) {
 
     // Record the width of the list
     breaks.push($vlinks.width());
 
     // Move item to the hidden list
-    $vlinks.children('*:not(.masthead__menu-item--lg)').last().prependTo($hlinks);
+    $movableLinks.last().prependTo($hlinks);
 
     // Show the dropdown btn
     if($btn.hasClass('hidden')) {
@@ -51,8 +52,8 @@ function updateNav() {
   // Keep counter updated
   $btn.attr("count", breaks.length);
 
-  // Recur if the visible list is still overflowing the nav
-  if($vlinks.width() > availableSpace) {
+  // The site title cannot move; stop once no ordinary links remain.
+  if($vlinks.width() > availableSpace && $vlinks.children('*:not(.masthead__menu-item--lg)').length) {
     updateNav();
   }
 

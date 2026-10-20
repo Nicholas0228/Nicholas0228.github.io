@@ -10,6 +10,7 @@ venue: "arXiv preprint"
 venue_label: "Preprint"
 authors: "<strong>Xiaoyu Wu*</strong>, Weihang Guo*, Yifei Wang*, Xinze Feng, Lydia E. Kavraki, Zhiwei Steven Wu"
 paperurl: "https://arxiv.org/abs/2609.36364"
+projecturl: "/blog/compress-to-remember/"
 featured: true
 featured_order: 1
 thumbnail: "/images/publications/compress-to-remember.png"

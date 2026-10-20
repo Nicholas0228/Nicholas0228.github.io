@@ -10,6 +10,8 @@ venue: "arXiv preprint"
 venue_label: "Preprint"
 authors: "Weihang Guo, <strong>Xiaoyu Wu</strong>, Yifei Wang, Niloofar Mireshghallah, Lydia E. Kavraki"
 paperurl: "https://arxiv.org/abs/2609.36599"
+projecturl: "https://weihangguo.github.io/scaling-video-reasoning/"
+tags: [video-generation, reasoning, scaling]
 featured: true
 featured_order: 2
 thumbnail: "/images/publications/video-reasoning.png"

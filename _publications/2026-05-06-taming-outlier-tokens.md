@@ -11,6 +11,7 @@ venue_label: "Preprint"
 authors: "<strong>Xiaoyu Wu*</strong>, Yifei Wang*, Tsu-Jui Fu, Liang-Chieh Chen, Zhe Gan, Chen Wei"
 paperurl: "https://arxiv.org/abs/2605.05206"
 projecturl: "https://a-little-hoof.github.io/dit-register/"
+tags: [diffusion, DiT, registers]
 codeurl: "https://github.com/a-little-hoof/DSR"
 featured: true
 featured_order: 5

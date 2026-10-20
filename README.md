@@ -15,6 +15,45 @@ See more info at https://academicpages.github.io/
 
 ## Running locally
 
+### Blog and project index
+
+`/blog/` lists posts marked `blog: true` and every publication with a `projecturl`,
+newest first. Project titles, dates, summaries and topic tags come from the
+publication front matter. External project pages keep their original URLs.
+When a publication points to a local blog post, that project is listed only once,
+using the post's content. Papers without a project page remain on Research.
+
+### Compress to Remember project page
+
+The project is a native Jekyll post at `/blog/compress-to-remember/`, listed on
+`/blog/` and linked from its Research entry. It does not embed or depend on the
+ChatGPT-hosted website.
+
+- Content: `_posts/2026-09-28-compress-to-remember.html`
+- Personal-site shell: `_layouts/project.html`
+- Interactive diagrams, comparison players, data, images and PDF:
+  `blog/compress-to-remember/`
+- Personal-site styling overrides: `blog/compress-to-remember/site.css`
+
+The interactive content was ported from the approved PACC project page (October
+19, 2026). Original videos remain at the pinned public Hugging Face revisions in
+`data.json`; they are not copied into this repository. Keep the reported results,
+media provenance, and matched-pair disclosures with the videos when editing.
+
+Preview the complete site before publishing:
+
+```bash
+bundle install
+bundle exec jekyll serve --config _config.yml,_config.dev.yml --host 127.0.0.1 --port 4000
+```
+
+Open `http://127.0.0.1:4000/blog/` or
+`http://127.0.0.1:4000/blog/compress-to-remember/`. When running over SSH, forward
+port 4000 in VS Code's Ports panel. Building or previewing does not commit, push,
+or publish anything.
+
+### General setup
+
 When you are initially working your website, it is very useful to be able to preview the changes locally before pushing them to GitHub. To work locally you will need to:
 
 1. Clone the repository and made updates as detailed above.
