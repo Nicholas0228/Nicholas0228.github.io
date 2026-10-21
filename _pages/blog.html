@@ -16,7 +16,7 @@ blog: true
   {% assign entries = pinned_entries | concat: remaining_entries %}
   {% for post in entries %}
   {% if post.projecturl and blog_urls contains post.projecturl %}{% continue %}{% endif %}
-  {% assign entry_url = post.projecturl | default: post.url %}
+  {% assign entry_url = post.link | default: post.projecturl | default: post.url %}
   {% unless entry_url contains '://' %}{% assign entry_url = entry_url | relative_url %}{% endunless %}
   <article class="blog-entry">
     <div class="blog-entry__meta">
