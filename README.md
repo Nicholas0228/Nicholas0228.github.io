@@ -29,6 +29,20 @@ it to the homepage.
 Use the Jekyll preview command below, then open
 `http://127.0.0.1:4000/blog/2026/10/guidance-in-looped-models/`.
 Forward port 4000 if the checkout is on an SSH host.
+`localhost` in your browser refers to your own computer, so a server running on
+the SSH host is reachable there only after forwarding its port. In VS Code,
+open the Ports panel, choose Forward a Port, and enter `4000`; use the local
+address shown by VS Code. Alternatively, run this in a terminal on your own
+computer, substituting your SSH destination:
+
+```bash
+ssh -N -L 8400:127.0.0.1:4000 user@remote-host
+```
+
+Then open `http://127.0.0.1:8400/blog/2026/10/guidance-in-looped-models/`.
+The preview export `local/guidance-preview-offline.html`, when present, can
+instead be downloaded and opened directly. It embeds the fonts, rendered
+equations, figures and interactive example, and needs no local server.
 
 `python3 scripts/check_guidance_math.py` independently checks the finite-model
 normalization identities, lookahead factorization, bounds and Taylor scaling.
