@@ -84,54 +84,55 @@ tags:
   <footer>Sander Dieleman, Guidance: a cheat code for diffusion models<sup class="citation" id="cite-sander-2"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup> (2022)</footer>
 </blockquote>
 
-<p>Let \(p_K(v\mid s)\) be the next-token prediction we want to strengthen and \(p_E(v\mid s)\) the reference prediction, for candidate token \(v\) after generated prefix \(s\). For CFG, these use different prompt conditioning; later, they will come from different loops of the same model. Suppress the fixed conditioning in the notation, assume positive token probabilities, and define the unnormalized token weight \(a\) and its local normalizer \(C\):</p>
+<p>Let \(p_K\) be the predictor we want to strengthen and \(p_E\) its reference. For a sequence \(y=(y_1,\ldots,y_T)\) of fixed length \(T\), \(y_t\) is the next token and \(y_{&lt;t}=(y_1,\ldots,y_{t-1})\) is its prefix. Assuming positive token probabilities and leaving the fixed prompt conditioning implicit, token-level guidance gives</p>
 
 <div class="equation">\[
-  a(v\mid s)=\frac{p_K(v\mid s)^{1+w}}{p_E(v\mid s)^w},
-  \qquad C(s)=\sum_v a(v\mid s).
+  q(y_t\mid y_{&lt;t})=\frac{1}{C(y_{&lt;t})}\,
+    \frac{p_K(y_t\mid y_{&lt;t})^{1+w}}{p_E(y_t\mid y_{&lt;t})^w},
+  \qquad C(y_{&lt;t})=\sum_{y_t}\frac{p_K(y_t\mid y_{&lt;t})^{1+w}}{p_E(y_t\mid y_{&lt;t})^w}.
 \]</div>
 
-<p>The guided next-token distribution is \(q(v\mid s)=a(v\mid s)/C(s)\). If \(z_K\) and \(z_E\) are the two predictors' logits (their unnormalized token scores), this is exactly what softmax of \((1+w)z_K-wz_E\) computes. For a full sequence \(y=(y_1,\ldots,y_T)\) of fixed length \(T\), multiplying the unnormalized token weights gives</p>
+<p>Here \(C(y_{&lt;t})\) is the normalizer; the sum runs over all possible next tokens.</p>
+
+<p>Write \(p_K(y)\) and \(p_E(y)\) for each model's sequence probability, obtained by multiplying its token probabilities. The guided joint distribution normalizes once with \(Z\); token-level guidance instead multiplies the locally normalized probabilities \(q\):</p>
 
 <div class="equation">\[
-  A(y)=\prod_{t=1}^T a(y_t\mid y_{&lt;t})
-  =\frac{P_K(y)^{1+w}}{P_E(y)^w}.
-\]</div>
-
-<p>Here \(P_K(y)\) and \(P_E(y)\) are the sequence probabilities obtained by multiplying each predictor's token probabilities. The guided joint distribution \(Q_{\rm joint}\) normalizes \(A(y)\) once. The distribution \(Q_{\rm local}\) produced by token-level guidance accumulates a normalizer at every prefix:</p>
-
-<div class="equation">\[
-  Q_{\rm joint}(y)=\frac{A(y)}{Z},
-  \qquad
-  Q_{\rm local}(y)=\frac{A(y)}{\prod_{t=1}^T C(y_{&lt;t})},
-  \quad Z=\sum_y A(y).
+  \begin{aligned}
+    Q_{\rm joint}(y)
+    &=\frac{1}{Z}\,
+      \frac{p_K(y)^{1+w}}{p_E(y)^w},
+      \qquad Z=\sum_y\frac{p_K(y)^{1+w}}{p_E(y)^w},\\[4pt]
+    Q_{\rm local}(y)
+    &=\frac{1}{\prod_{t=1}^T C(y_{&lt;t})}\,
+      \frac{p_K(y)^{1+w}}{p_E(y)^w}.
+  \end{aligned}
   \tag{3}
 \]</div>
 
-<p>Both rules assign the same unnormalized weight to a sequence. But \(Z\) is shared by every sequence, whereas \(\prod_t C(y_{&lt;t})\) depends on the prefixes along that particular sequence. <strong>This sequence-dependent denominator is the normalization mismatch.</strong></p>
+<p>The numerators are identical. The difference is normalization: \(Z\) is shared by every sequence, whereas the product of local normalizers depends on the sequence's prefixes \(y_{&lt;t}\). <strong>This is the normalization mismatch.</strong></p>
 
 <details class="proof" id="proof-lookahead">
   <summary>How would the guided joint distribution choose each token?</summary>
   <div class="proof-body">
-    <p>Every joint distribution admits a sequential factorization. The issue is whether the simple local rule gives us the <em>right</em> conditionals. Let \(H(s)\) be the total unnormalized guided weight of every possible completion after prefix \(s\). The exact conditional of the joint target is</p>
+    <p>Every joint distribution admits a sequential factorization. The issue is whether the simple local rule gives us the <em>right</em> conditionals. For this derivation, abbreviate the unnormalized token weight as \(a(y_t\mid y_{&lt;t})=p_K(y_t\mid y_{&lt;t})^{1+w}/p_E(y_t\mid y_{&lt;t})^w\). Let \(H(y_{&lt;t})\) be the total unnormalized guided weight of all completions after that prefix. Writing \(y_{\leq t}=(y_1,\ldots,y_t)\) for the prefix including the next token, the exact conditional is</p>
 
     <div class="equation">\[
-      Q_{\rm joint}(v\mid s)
-      =\frac{a(v\mid s)H(sv)}{\sum_u a(u\mid s)H(su)}.
+      Q_{\rm joint}(y_t\mid y_{&lt;t})
+      =\frac{a(y_t\mid y_{&lt;t})H(y_{\leq t})}{H(y_{&lt;t})}.
       \tag{4}
     \]</div>
 
-    <p>The term \(H(sv)\) accounts for all the futures opened up by choosing \(v\). Ordinary local guidance omits it. Computing it exactly is usually impractical, because it requires summing over possible continuations.</p>
-    <p>Let \(A_{\rm past}(s)\) be the product of guided weights along the prefix. Define \(H(s)\) as the sum of the remaining products over completions of total length \(T\), with \(H(y)=1\) for a complete sequence. It satisfies</p>
+    <p>The term \(H(y_{\leq t})\) accounts for all the futures opened up by choosing \(y_t\). Ordinary local guidance omits it. Computing it exactly is usually impractical, because it requires summing over possible continuations.</p>
+    <p>For a complete sequence, \(H(y)=1\). Grouping completions by their next token gives</p>
     <div class="equation">\[
-      H(s)=\sum_v a(v\mid s)H(sv),\qquad H(\varnothing)=Z.
+      H(y_{&lt;t})=\sum_{y_t}a(y_t\mid y_{&lt;t})H(y_{\leq t}),\qquad H(\varnothing)=Z.
     \]</div>
-    <p>The joint target's marginal prefix mass is \(Q_{\rm joint}(s)=A_{\rm past}(s)H(s)/Z\). Divide the mass of \(sv\) by the mass of \(s\):</p>
+    <p>Divide the joint target's probability of the extended prefix by that of the original prefix. The weights of already chosen tokens and the global normalizer cancel:</p>
     <div class="equation">\[
-      \frac{Q_{\rm joint}(sv)}{Q_{\rm joint}(s)}
-      =\frac{a(v\mid s)H(sv)}{H(s)}.
+      \frac{Q_{\rm joint}(y_{\leq t})}{Q_{\rm joint}(y_{&lt;t})}
+      =\frac{a(y_t\mid y_{&lt;t})H(y_{\leq t})}{H(y_{&lt;t})}.
     \]</div>
-    <p>This gives Equation (4). The local rule agrees whenever \(H(sv)\) is the same for every candidate \(v\) at that prefix.</p>
+    <p>This gives Equation (4). The local rule agrees whenever \(H(y_{\leq t})\) is the same for every possible next token at that prefix.</p>
   </div>
 </details>
 
@@ -174,7 +175,7 @@ tags:
 
 <h2 id="loops"><span class="section-number">03</span>Loooop</h2>
 
-<p>A looped Transformer applies <strong>the same block of layers repeatedly</strong> before predicting the next token. Huginn<sup class="citation" id="cite-huginn-1"><a href="#ref-huginn" role="doc-noteref" aria-label="Reference 11: Jonas Geiping et al., Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach">11</a></sup> and Ouro<sup class="citation" id="cite-ouro-1"><a href="#ref-ouro" role="doc-noteref" aria-label="Reference 12: Rui-Jie Zhu et al., Scaling Latent Reasoning via Looped Language Models">12</a></sup> implement this idea in different ways. Each completed loop gives a hidden state that can be converted into next-token logits: \(z_E\) after an earlier loop \(E\), and \(z_K\) after the final loop \(K\).</p>
+<p>A looped Transformer applies <strong>the same block of layers repeatedly</strong> before predicting the next token. Huginn<sup class="citation" id="cite-huginn-1"><a href="#ref-huginn" role="doc-noteref" aria-label="Reference 11: Jonas Geiping et al., Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach">11</a></sup> and Ouro<sup class="citation" id="cite-ouro-1"><a href="#ref-ouro" role="doc-noteref" aria-label="Reference 12: Rui-Jie Zhu et al., Scaling Latent Reasoning via Looped Language Models">12</a></sup> implement this idea in different ways. Each completed loop gives a hidden state that can be converted into next-token logits (unnormalized token scores): \(z_E\) after an earlier loop \(E\), and \(z_K\) after the final loop \(K\).</p>
 
 <figure class="loop-architecture" id="loop-architecture" aria-label="Repeated applications of the same block f refine the hidden state from loop E to final loop K. These states produce early and final next-token logits.">
   <div class="architecture-label">Same block, repeated</div>
@@ -212,19 +213,18 @@ tags:
     </tbody>
   </table>
 </div>
-<p class="table-note">Before and after use the same number of loops: 4 for Ouro and 32 for Huginn. Guidance combines an earlier prediction or state with the final one; it does not add loops. Settings: Tables 1, 3, and A4.</p>
 
 <p>Because every loop repeats the same computation, its predictions are expected to stay close as the hidden state is refined. This gives us a route back to the normalization problem: <strong>close loop predictions can make token-level guidance a better approximation to the guided joint distribution.</strong> Below we show how the error depends on their logit difference, then measure that difference.</p>
 
 <h3 id="cancellation">Why loops help</h3>
 
-<p>The key assumption is that predictions from different loops have similar logits. Under this small-difference assumption, we can bound the local normalizer \(C(s)\).</p>
+<p>The key assumption is that predictions from different loops have similar logits. Under this small-difference assumption, we can bound the local normalizer \(C(y_{&lt;t})\).</p>
 
 <p>At a fixed prefix, write \(\delta=z_K-z_E\). After removing an irrelevant constant offset, assume \(\delta=\epsilon d\), with \(d\) bounded and \(\epsilon\) small. Keep the guidance strength fixed and bounded. A Taylor expansion gives</p>
 
 <div class="key-result">
   <div class="equation">\[
-    \boxed{\log C(s)
+    \boxed{\log C(y_{&lt;t})
     =\frac{w(1+w)}{2}\operatorname{Var}_{p_E}(\delta)
     +O(\epsilon^3).}
     \tag{6}
@@ -239,17 +239,17 @@ tags:
   <div class="proof-body">
     <p id="proof-kl">First, the local normalizer satisfies the exact identity</p>
     <div class="equation">\[
-      \log C(s)
+      \log C(y_{&lt;t})
       =D_{\rm KL}(p_K\Vert q)+wD_{\rm KL}(p_K\Vert p_E).
       \tag{7}
     \]</div>
-    <p><strong>Proof of Equation (7).</strong> Suppress the prefix and use \(\log q=(1+w)\log p_K-w\log p_E-\log C\). Rearranging gives</p>
+    <p><strong>Proof of Equation (7).</strong> Suppress the prefix, let \(v\) index possible tokens, and use \(\log q=(1+w)\log p_K-w\log p_E-\log C\). Rearranging gives</p>
     <div class="equation">\[
       \log\frac{p_K(v)}{q(v)}
       =\log C-w\log\frac{p_K(v)}{p_E(v)}.
     \]</div>
-    <p>Taking the expectation over \(v\sim p_K\) yields Equation (7). For \(w\geq0\), both KL terms are nonnegative, so \(\log C(s)\geq0\). This identity does not require small logit differences.</p>
-    <p>To find how quickly \(\log C(s)\) approaches zero when the predictions are close, define the log moment-generating function of the logit difference under the reference distribution:</p>
+    <p>Taking the expectation over \(v\sim p_K\) yields Equation (7). For \(w\geq0\), both KL terms are nonnegative, so \(\log C(y_{&lt;t})\geq0\). This identity does not require small logit differences.</p>
+    <p>To find how quickly \(\log C(y_{&lt;t})\) approaches zero when the predictions are close, define the log moment-generating function of the logit difference under the reference distribution:</p>
     <div class="equation">\[
       \psi(\alpha)=\log\mathbb E_{v\sim p_E}e^{\alpha\delta(v)}.
     \]</div>
@@ -281,7 +281,7 @@ tags:
 
 <h3>Bounding the error over the full sequence</h3>
 
-<p>Suppose \(0\leq\log C(s)\leq\eta\) at every prefix of a length-\(T\) sequence. Equation (3) then bounds the log-probability difference between token-level guidance and the guided joint distribution:</p>
+<p>Suppose \(0\leq\log C(y_{&lt;t})\leq\eta\) at every prefix of a length-\(T\) sequence. Equation (3) then bounds the log-probability difference between token-level guidance and the guided joint distribution:</p>
 
 <div class="equation">\[
   \left|\log\frac{Q_{\rm local}(y)}{Q_{\rm joint}(y)}\right|
@@ -294,7 +294,7 @@ tags:
 <details class="proof" id="proof-sequence">
   <summary>Prove the sequence bound, including the global normalizer</summary>
   <div class="proof-body">
-    <p>Set \(D(y)=\prod_t C(y_{&lt;t})\). Since \(A(y)=Q_{\rm local}(y)D(y)\), summing over sequences gives</p>
+    <p>Set \(D(y)=\prod_t C(y_{&lt;t})\). Equation (3) gives \(ZQ_{\rm joint}(y)=Q_{\rm local}(y)D(y)\). Summing over sequences gives</p>
     <div class="equation">\[
       Z=\sum_y Q_{\rm local}(y)D(y)
        =\mathbb E_{Q_{\rm local}}D(Y).
@@ -309,7 +309,7 @@ tags:
     <div class="equation">\[
       0\leq\log C\leq\frac{w(1+w)}{8}R^2.
     \]</div>
-    <p>Thus a uniform range bound \(R(s)\leq R_*\) yields \(\eta=w(1+w)R_*^2/8\). This makes clear why average RMS alone cannot certify the sequence guarantee. The proof uses a fixed finite horizon and common positive support; unrestricted generation with EOS needs corresponding control of length and the partition function.</p>
+    <p>Thus a uniform range bound \(R(y_{&lt;t})\leq R_*\) yields \(\eta=w(1+w)R_*^2/8\). This makes clear why average RMS alone cannot certify the sequence guarantee. The proof uses a fixed finite horizon and common positive support; unrestricted generation with EOS needs corresponding control of length and the partition function.</p>
   </div>
 </details>
 
@@ -317,14 +317,14 @@ tags:
 
 <p>We compared two looped models, Huginn-0125 and Ouro-2.6B, with two ordinary Transformers, Qwen2.5-3B and Pythia-2.8B. Each model saw the same 1,024 text prefixes: eight positions on each of 128 GSM8K development questions. At each prefix, we compared the model's next-token logits partway through its computation with its own final logits.</p>
 
-<p>Here, <strong>depth \(k\)</strong> means the number of completed loops in a looped model, or completed layers in an ordinary Transformer. The final depth \(K\) stays fixed. Let \(V\) be the vocabulary size and \(v\in\{1,\ldots,V\}\) a candidate token's index. Then \(z_{k,v}(s)\) is that token's score after depth \(k\), on the same text prefix \(s\).</p>
+<p>Here, <strong>depth \(k\)</strong> means the number of completed loops in a looped model, or completed layers in an ordinary Transformer. The final depth \(K\) stays fixed. Let \(V\) be the vocabulary size and \(v\in\{1,\ldots,V\}\) a candidate token's index. Then \(z_{k,v}(y_{&lt;t})\) is that token's score after depth \(k\), on the same text prefix \(y_{&lt;t}\).</p>
 
-<p>For each \(k\), compute the change to the final score, \(\delta^{(k)}_v(s)=z_{K,v}(s)-z_{k,v}(s)\). Remove its vocabulary mean, \(\bar\delta^{(k)}(s)=V^{-1}\sum_v\delta^{(k)}_v(s)\), because adding the same constant to every logit does not change softmax. We measure the remaining change with</p>
+<p>For each \(k\), compute the change to the final score, \(\delta^{(k)}_v(y_{&lt;t})=z_{K,v}(y_{&lt;t})-z_{k,v}(y_{&lt;t})\). Remove its vocabulary mean, \(\bar\delta^{(k)}(y_{&lt;t})=V^{-1}\sum_v\delta^{(k)}_v(y_{&lt;t})\), because adding the same constant to every logit does not change softmax. We measure the remaining change with</p>
 
 <div class="equation">\[
-  \operatorname{RMS}_{\rm centered}(k,s)
+  \operatorname{RMS}_{\rm centered}(k,y_{&lt;t})
   =\sqrt{\frac{1}{V}\sum_{v=1}^V
-    \bigl(\delta^{(k)}_v(s)-\bar\delta^{(k)}(s)\bigr)^2}.
+    \bigl(\delta^{(k)}_v(y_{&lt;t})-\bar\delta^{(k)}(y_{&lt;t})\bigr)^2}.
   \tag{9}
 \]</div>
 
@@ -334,7 +334,6 @@ tags:
 
 <div class="table-scroll">
   <table>
-    <caption>Which intermediate depth is compared with which final depth?</caption>
     <thead><tr><th scope="col">Model</th><th scope="col">Intermediate \(k\): 25%, 50%, 75%</th><th scope="col">Fixed final \(K\)</th></tr></thead>
     <tbody>
       <tr><th scope="row">Huginn-0125</th><td>Loops 8, 16, 24</td><td>32 loops</td></tr>
@@ -379,13 +378,11 @@ tags:
 
 <h2 id="connections"><span class="section-number">05</span>Loops and diffusion, beyond guidance</h2>
 
-<p><strong>Guidance connects looped models and diffusion through a shared idea: use a weaker prediction to steer a stronger one.</strong> In diffusion, autoguidance uses a smaller, less-trained model as the reference.<sup class="citation" id="cite-autoguidance-1"><a href="#ref-autoguidance" role="doc-noteref" aria-label="Reference 14: Tero Karras et al., Guiding a Diffusion Model with a Bad Version of Itself">14</a></sup> A looped model can obtain its reference from an earlier loop. But the connections now extend beyond guidance to how these models are trained and how they spend computation at inference.</p>
+<p><strong>Guidance is one connection between looped models and diffusion; learning to refine a prediction is the broader one.</strong> Autoguidance uses a smaller, less-trained diffusion model as a reference,<sup class="citation" id="cite-autoguidance-1"><a href="#ref-autoguidance" role="doc-noteref" aria-label="Reference 14: Tero Karras et al., Guiding a Diffusion Model with a Bad Version of Itself">14</a></sup> while a looped model can use its own earlier prediction. In both cases, a weaker prediction provides information for improving a stronger one.</p>
 
-<p>LoopFormer makes this connection explicit by giving each loop an internal time \(t\) and step size \(\Delta t\).<sup class="citation" id="cite-loopformer-1"><a href="#ref-loopformer" role="doc-noteref" aria-label="Reference 15: Ahmadreza Jeddi, Marco Ciccone, and Babak Taati, LoopFormer: Elastic-Depth Looped Transformers for Latent Reasoning via Shortcut Modulation">15</a></sup> Its shortcut-consistency objective aligns computations of different lengths, borrowing timestep conditioning and shortcut training from diffusion. The same model can then take fewer, larger steps or more, smaller steps according to its computation budget.</p>
+<p>Several lines of work point in this direction. Huginn<sup class="citation" id="cite-huginn-2"><a href="#ref-huginn" role="doc-noteref" aria-label="Reference 11: Jonas Geiping et al., Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach">11</a></sup> and Ouro<sup class="citation" id="cite-ouro-2"><a href="#ref-ouro" role="doc-noteref" aria-label="Reference 12: Rui-Jie Zhu et al., Scaling Latent Reasoning via Looped Language Models">12</a></sup> scale computation through latent iterations. Consistency Models<sup class="citation" id="cite-consistency-1"><a href="#ref-consistency" role="doc-noteref" aria-label="Reference 15: Yang Song et al., Consistency Models">15</a></sup> and Shortcut Models<sup class="citation" id="cite-shortcut-1"><a href="#ref-shortcut" role="doc-noteref" aria-label="Reference 16: Kevin Frans et al., One Step Diffusion via Shortcut Models">16</a></sup> support generation at different sampling budgets. LoopFormer<sup class="citation" id="cite-loopformer-1"><a href="#ref-loopformer" role="doc-noteref" aria-label="Reference 17: Ahmadreza Jeddi, Marco Ciccone, and Babak Taati, LoopFormer: Elastic-Depth Looped Transformers for Latent Reasoning via Shortcut Modulation">17</a></sup> brings time conditioning and shortcut consistency to looped Transformers, while <em>Thinking with Looped Flows</em><sup class="citation" id="cite-looped-flows-1"><a href="#ref-looped-flows" role="doc-noteref" aria-label="Reference 18: Ayhan Suleymanzade et al., Thinking with Looped Flows">18</a></sup> trains recurrent reasoning with denoising objectives. Together, these works suggest a common question: how should we train each update so that the model works with a small budget and improves with more computation?</p>
 
-<p><em>Thinking with Looped Flows</em> connects recurrent computation directly to denoising.<sup class="citation" id="cite-looped-flows-1"><a href="#ref-looped-flows" role="doc-noteref" aria-label="Reference 16: Ayhan Suleymanzade, Chanhyuk Lee, Floor Eijkelboom, Nicholas M. Boffi, İsmail İlkan Ceylan, and Jinwoo Kim, Thinking with Looped Flows">16</a></sup> It trains a recurrent denoiser on progressively less noisy versions of a solution. At inference, a probability flow transforms noise into a solution while carrying the recurrent state between steps; a finer time grid allocates more computation.</p>
-
-<p>The bigger picture is <strong>test-time scaling through iterative refinement</strong>. Both looped models and diffusion break a difficult generative task into smaller, easier updates and let us vary how many updates we perform at inference. Guidance is one consequence of that structure. Their shared use of repeated computation suggests that the connection between loops and diffusion may run deeper than it first appears.</p>
+<p>The bigger picture is <strong>test-time scaling through a learned refinement process</strong>. Diffusion revises a noisy sample; a looped language model revises a hidden state before choosing a token. Both break a difficult generative task into smaller updates. This shifts the design goal from getting only the final prediction right to making the intermediate predictions useful too: they can provide an early answer, a reference for guidance, or a starting point for further correction. The opportunity is to train not only what a model predicts, but <strong>how its prediction improves when we give it more time</strong>.</p>
 
 <h3 id="references">References</h3>
 <ol class="references">
@@ -399,10 +396,12 @@ tags:
   <li id="ref-llm-cfg">Guillaume V. Sanchez et al. <a href="https://arxiv.org/abs/2306.17806"><cite>Stay on topic with Classifier-Free Guidance</cite></a>. arXiv, 2023. <a class="citation-back" href="#cite-llm-cfg-1" role="doc-backlink" aria-label="Back to citation 1 of reference 8">↩</a></li>
   <li id="ref-contrastive-decoding">Xiang Lisa Li et al. <a href="https://arxiv.org/abs/2210.15097"><cite>Contrastive Decoding: Open-ended Text Generation as Optimization</cite></a>. arXiv, 2022. <a class="citation-back" href="#cite-contrastive-decoding-1" role="doc-backlink" aria-label="Back to citation 1 of reference 9">↩</a></li>
   <li id="ref-dola">Yung-Sung Chuang et al. <a href="https://arxiv.org/abs/2309.03883"><cite>DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models</cite></a>. arXiv, 2023. <a class="citation-back" href="#cite-dola-1" role="doc-backlink" aria-label="Back to citation 1 of reference 10">↩</a></li>
-  <li id="ref-huginn">Jonas Geiping et al. <a href="https://arxiv.org/html/2502.05171v2"><cite>Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach</cite></a>. arXiv, 2025. <a class="citation-back" href="#cite-huginn-1" role="doc-backlink" aria-label="Back to citation 1 of reference 11">↩</a></li>
-  <li id="ref-ouro">Rui-Jie Zhu et al. <a href="https://arxiv.org/abs/2510.25741"><cite>Scaling Latent Reasoning via Looped Language Models</cite></a>. arXiv, 2025. <a class="citation-back" href="#cite-ouro-1" role="doc-backlink" aria-label="Back to citation 1 of reference 12">↩</a></li>
+  <li id="ref-huginn">Jonas Geiping et al. <a href="https://arxiv.org/html/2502.05171v2"><cite>Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach</cite></a>. arXiv, 2025. <a class="citation-back" href="#cite-huginn-1" role="doc-backlink" aria-label="Back to citation 1 of reference 11">↩1</a> <a class="citation-back" href="#cite-huginn-2" role="doc-backlink" aria-label="Back to citation 2 of reference 11">↩2</a></li>
+  <li id="ref-ouro">Rui-Jie Zhu et al. <a href="https://arxiv.org/abs/2510.25741"><cite>Scaling Latent Reasoning via Looped Language Models</cite></a>. arXiv, 2025. <a class="citation-back" href="#cite-ouro-1" role="doc-backlink" aria-label="Back to citation 1 of reference 12">↩1</a> <a class="citation-back" href="#cite-ouro-2" role="doc-backlink" aria-label="Back to citation 2 of reference 12">↩2</a></li>
   <li id="ref-loopcd">Weihao Liu et al. <a href="https://arxiv.org/html/2610.02185v1"><cite>Decoding Looped Transformers Better for (Almost) Free</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-loopcd-1" role="doc-backlink" aria-label="Back to citation 1 of reference 13">↩1</a> <a class="citation-back" href="#cite-loopcd-2" role="doc-backlink" aria-label="Back to citation 2 of reference 13">↩2</a></li>
   <li id="ref-autoguidance">Tero Karras et al. <a href="https://arxiv.org/abs/2406.02507"><cite>Guiding a Diffusion Model with a Bad Version of Itself</cite></a>. NeurIPS, 2024. <a class="citation-back" href="#cite-autoguidance-1" role="doc-backlink" aria-label="Back to citation 1 of reference 14">↩</a></li>
-  <li id="ref-loopformer">Ahmadreza Jeddi, Marco Ciccone, and Babak Taati. <a href="https://arxiv.org/abs/2602.11451"><cite>LoopFormer: Elastic-Depth Looped Transformers for Latent Reasoning via Shortcut Modulation</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-loopformer-1" role="doc-backlink" aria-label="Back to citation 1 of reference 15">↩</a></li>
-  <li id="ref-looped-flows">Ayhan Suleymanzade, Chanhyuk Lee, Floor Eijkelboom, Nicholas M. Boffi, İsmail İlkan Ceylan, and Jinwoo Kim. <a href="https://arxiv.org/abs/2609.11801"><cite>Thinking with Looped Flows</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-looped-flows-1" role="doc-backlink" aria-label="Back to citation 1 of reference 16">↩</a></li>
+  <li id="ref-consistency">Yang Song, Prafulla Dhariwal, Mark Chen, and Ilya Sutskever. <a href="https://arxiv.org/abs/2303.01469"><cite>Consistency Models</cite></a>. ICML, 2023. <a class="citation-back" href="#cite-consistency-1" role="doc-backlink" aria-label="Back to citation 1 of reference 15">↩</a></li>
+  <li id="ref-shortcut">Kevin Frans, Danijar Hafner, Sergey Levine, and Pieter Abbeel. <a href="https://arxiv.org/abs/2410.12557"><cite>One Step Diffusion via Shortcut Models</cite></a>. arXiv, 2024. <a class="citation-back" href="#cite-shortcut-1" role="doc-backlink" aria-label="Back to citation 1 of reference 16">↩</a></li>
+  <li id="ref-loopformer">Ahmadreza Jeddi, Marco Ciccone, and Babak Taati. <a href="https://arxiv.org/abs/2602.11451"><cite>LoopFormer: Elastic-Depth Looped Transformers for Latent Reasoning via Shortcut Modulation</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-loopformer-1" role="doc-backlink" aria-label="Back to citation 1 of reference 17">↩</a></li>
+  <li id="ref-looped-flows">Ayhan Suleymanzade, Chanhyuk Lee, Floor Eijkelboom, Nicholas M. Boffi, İsmail İlkan Ceylan, and Jinwoo Kim. <a href="https://arxiv.org/abs/2609.11801"><cite>Thinking with Looped Flows</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-looped-flows-1" role="doc-backlink" aria-label="Back to citation 1 of reference 18">↩</a></li>
 </ol>
