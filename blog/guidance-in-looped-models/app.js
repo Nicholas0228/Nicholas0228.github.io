@@ -32,11 +32,19 @@
     document.getElementById('strong-b2').textContent = (0.5 - d).toFixed(2);
     document.getElementById('joint-b-value').textContent = (100 * result.jointB).toFixed(1) + '%';
     document.getElementById('joint-b-bar').style.width = (100 * result.jointB) + '%';
+    const agree = w === 0 || d === 0;
+    const gap = 100 * (result.jointB - 0.5);
+    document.getElementById('toy-gap-value').textContent = agree ? 'No' : (gap < 0.05 ? '<0.1' : gap.toFixed(1));
+    document.getElementById('toy-gap-label').textContent = agree ? 'difference: the two ways agree' : 'percentage-point difference';
+    document.getElementById('toy-gap-explanation').textContent = agree
+      ? 'Both start with B half the time, and agree on all four complete answers.'
+      : 'Guiding whole answers shifts probability toward B, before the second token is chosen.';
+    toy.classList.toggle('toy-agree', agree);
     document.getElementById('cb-value').textContent = result.cB.toFixed(3);
     document.getElementById('tv-value').textContent = (100 * result.tv).toFixed(2) + '%';
     for (const name of ['strong', 'reference', 'local', 'joint']) {
       result[name].forEach((value, index) => {
-        document.getElementById(`toy-${name}-${index}`).textContent = value.toFixed(3);
+        document.getElementById(`toy-${name}-${index}`).textContent = value > 0 && value < 0.0005 ? '<0.001' : value.toFixed(3);
       });
     }
   }

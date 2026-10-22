@@ -24,8 +24,8 @@ def main():
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
     colors = {"huginn": "#207a65", "ouro": "#225b87", "qwen": "#b4773a", "pythia": "#956b8b"}
     markers = {"huginn": "o", "ouro": "s", "qwen": "^", "pythia": "D"}
-    metrics = [("centered_logit_rms", "A  Intermediate-to-final gap", "Centered logit RMS", [.1, .3, 1, 3]),
-               ("relative_centered_rms", "B  Adjusted for final-logit scale", "Gap / final centered logit RMS", [.03, .1, .3, 1])]
+    metrics = [("centered_logit_rms", "A  Intermediate-to-final gap", "Centered logit RMS", [0, 1, 2, 3, 4, 5]),
+               ("relative_centered_rms", "B  Adjusted for final-logit scale", "Gap / final centered logit RMS", [0, .5, 1, 1.5, 2])]
     for ax, (metric, title, ylabel, ticks) in zip(axes, metrics):
         ax.set_facecolor("#fcfbf8")
         for m in data["models"]:
@@ -38,9 +38,12 @@ def main():
             ax.plot(x, mean, color=color, lw=2, marker=markers[m["key"]], ms=5,
                     ls="-" if m["kind"] == "loop" else "--", label=m["label"])
         ax.set_title(title, loc="left", fontsize=13, pad=20, weight="medium")
-        ax.set_xlabel("Fraction of deployed loops or layers", labelpad=12)
+        ax.set_xlabel("Readout depth (% of full depth)", labelpad=12)
         ax.set_ylabel(ylabel, labelpad=9)
-        ax.set_yscale("log")
+        highest_ci = max(d[metric]["question_bootstrap_95ci"][1]
+                         for m in data["models"] for d in m["depths"]
+                         if d["depth"] < m["final_depth"])
+        ax.set_ylim(0, max(ticks[-1], highest_ci * 1.08))
         ax.set_xlim(0, 1)
         ax.set_xticks([.25, .5, .75, 1], ["25%", "50%", "75%", "100%"])
         ax.yaxis.set_major_locator(FixedLocator(ticks))
