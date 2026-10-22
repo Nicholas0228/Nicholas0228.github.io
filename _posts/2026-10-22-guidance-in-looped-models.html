@@ -168,29 +168,22 @@ tags:
 
 <p>A looped Transformer applies <strong>the same block of layers repeatedly</strong> to refine a hidden state before predicting the next token. Implementations such as Huginn<sup class="citation" id="cite-huginn-1"><a href="#ref-huginn" role="doc-noteref" aria-label="Reference 10: Jonas Geiping et al., Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach">10</a></sup> and Ouro<sup class="citation" id="cite-ouro-1"><a href="#ref-ouro" role="doc-noteref" aria-label="Reference 11: Rui-Jie Zhu et al., Scaling Latent Reasoning via Looped Language Models">11</a></sup> differ in their details, but the high-level computation looks like this:</p>
 
-<figure class="loop-architecture" id="loop-architecture" aria-label="High-level looped model: process the input prefix, repeatedly apply a shared block to a hidden state, then apply the same output layers to early and final states to obtain logits.">
-  <div class="architecture-input">Input prefix \(x\)</div>
-  <div class="architecture-arrow" aria-hidden="true">&darr;</div>
-  <div class="architecture-stage">Input processing</div>
-  <div class="architecture-arrow" aria-hidden="true">&darr;</div>
-  <div class="architecture-core">
-    <div class="architecture-label">Shared block \(f\), repeated</div>
-    <div class="trajectory">
-      <div class="state">\(h_0\)<small>Start</small></div><span class="arrow" aria-hidden="true">&rarr;</span>
-      <div class="state">\(f(h_0)\)<small>Loop 1</small></div><span class="arrow" aria-hidden="true">&rarr;</span>
-      <div class="state">\(f(f(h_0))\)<small>Loop 2</small></div><span class="arrow" aria-hidden="true">&ctdot; &rarr;</span>
-      <div class="state">\(h_K\)<small>Final</small></div>
-    </div>
+<figure class="loop-architecture" id="loop-architecture" aria-label="Repeated applications of the same block f refine an early state h E into the final state h K. Shared output layers read these two states as early and final logits.">
+  <div class="architecture-label">Same block, repeated</div>
+  <div class="trajectory">
+    <div class="state state-early">\(h_E\)</div><span class="arrow" aria-hidden="true">&rarr;</span>
+    <div class="state">\(f(h_E)\)</div><span class="arrow" aria-hidden="true">&rarr;</span>
+    <div class="state">\(f(f(h_E))\)</div><span class="arrow" aria-hidden="true">&ctdot; &rarr;</span>
+    <div class="state state-final">\(h_K\)</div>
+    <span class="readout-arrow readout-early" aria-hidden="true">&darr;</span>
+    <span class="readout-label">Shared output layers</span>
+    <span class="readout-arrow readout-final" aria-hidden="true">&darr;</span>
+    <div class="logits logits-early">\(z_E\)<small>Early</small></div>
+    <div class="logits logits-final">\(z_K\)<small>Final</small></div>
   </div>
-  <div class="architecture-readouts">Early state \(h_E\) and final state \(h_K\)</div>
-  <div class="architecture-arrow" aria-hidden="true">&darr;</div>
-  <div class="architecture-stage">Output layers + prediction head</div>
-  <div class="architecture-arrow" aria-hidden="true">&darr;</div>
-  <div class="architecture-logits"><span>\(z_E\)<small>Early logits</small></span><span>\(z_K\)<small>Final logits</small></span></div>
-  <figcaption>High-level view at a fixed token prefix. Both states use the same readout.</figcaption>
 </figure>
 
-<p>Reading an early state \(h_E\) and the final state \(h_K\) through the same output layers gives logits \(z_E\) and \(z_K\). <strong>The network supplies its own reference.</strong></p>
+<p>Input layers prepare the text. The shared block refines its hidden state, and the same output layers read an early state \(h_E\) and the final state \(h_K\) as logits \(z_E\) and \(z_K\). <strong>The network supplies its own reference.</strong></p>
 
 <p>LoopCD<sup class="citation" id="cite-loopcd-1"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 12: Weihao Liu et al., Decoding Looped Transformers Better for (Almost) Free">12</a></sup> uses these recurrent readouts for contrastive decoding without additional training. Its logit variant extrapolates from the early prediction toward the later one:</p>
 
@@ -207,9 +200,9 @@ tags:
     <caption>Selected results reported by LoopCD.<sup class="citation" id="cite-loopcd-2"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 12: Weihao Liu et al., Decoding Looped Transformers Better for (Almost) Free">12</a></sup> Scores are percentages.</caption>
     <thead><tr><th scope="col">Model / task</th><th scope="col">Guidance</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
     <tbody>
-      <tr><th scope="row">Ouro-2.6B-Thinking<small>AIME 2024 · pass@1</small></th><td>Adaptive logits</td><td>61.88</td><td><strong>73.33</strong></td></tr>
+      <tr><th scope="row">Ouro-2.6B-Thinking<small>AIME 2024 · pass@1</small></th><td>Logits<small>Adaptive strength</small></td><td>61.88</td><td><strong>73.33</strong></td></tr>
       <tr><th scope="row">Huginn · 32 loops<small>HumanEval · pass@1</small></th><td>Hidden states</td><td>22.56</td><td><strong>31.71</strong></td></tr>
-      <tr><th scope="row">Huginn · 32 loops<small>GSM8K · accuracy</small></th><td>Fixed logits</td><td>42.91</td><td>41.62</td></tr>
+      <tr><th scope="row">Huginn · 32 loops<small>GSM8K · accuracy</small></th><td>Logits<small>Fixed strength</small></td><td>42.91</td><td>41.62</td></tr>
     </tbody>
   </table>
 </div>
