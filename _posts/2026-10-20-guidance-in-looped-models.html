@@ -1,0 +1,712 @@
+---
+layout: research-post
+title: "Guidance has now become a cheatcode in LLM."
+date: 2026-10-20
+permalink: /blog/2026/10/guidance-in-looped-models/
+blog: true
+entry_type: Blogpost
+excerpt: "Why guidance fits diffusion, what breaks when we apply it token by token, and how shared hidden states in looped models create a useful self-guidance direction."
+tags:
+  - guidance
+  - LLMs
+  - looped models
+sections:
+  - id: diffusion-guidance
+    title: Why diffusion can do guidance
+  - id: llm-guidance
+    title: Why LLM doesn't support guidance natively
+  - id: loop-guidance
+    title: Loop models enable guidance with shared hidden states
+---
+
+<p class="lead">
+  Guidance is an inference-time technique that steers generation toward desired outputs without
+  updating model weights. In diffusion, classifier-free guidance amplifies the difference between
+  conditional and unconditional predictions to strengthen the conditioning signal. Looped language
+  models offer a related form of self-guidance: contrast an early prediction with a later prediction
+  from the same computation.
+</p>
+
+<p class="thesis">The useful question is not whether we can subtract two predictions. It is what distribution that subtraction produces.</p>
+
+<p>
+  The answer comes down to normalization. In diffusion, the normalizer is constant with respect
+  to the entire sample. In autoregressive language modeling, it depends on the prefix, which is
+  itself part of the answer. Loops make the two predictions more closely related, but they do
+  not automatically erase that distinction.
+</p>
+
+<aside class="callout">
+  <p><strong>In brief.</strong> Shared computation gives a looped model its own reference predictor.
+  This makes guidance a natural inference-time intervention. Under a small-logit-difference
+  assumption, the normalization mismatch is second order for a fixed, bounded guidance strength. That is a useful
+  approximation, not a proof that ordinary token-by-token decoding has become diffusion.</p>
+</aside>
+
+<section aria-labelledby="diffusion-guidance">
+  <h2 id="diffusion-guidance"><span class="part-number">01</span>Why diffusion can do guidance</h2>
+
+  <aside class="callout definition-box" id="cfg-definition" aria-labelledby="cfg-definition-title">
+    <p id="cfg-definition-title"><strong>Definition: classifier-free guidance (CFG)</strong></p>
+    <p>
+      The distributional aim of <dfn>classifier-free guidance</dfn>
+      is to favor samples that more strongly support a condition \(c\), such as a text
+      prompt. For clean data \(x\), start with the conditional distribution
+      \(p_0(x\mid c)\) and reweight by its density ratio to the unconditional
+      distribution \(p_0(x)\). The desired <strong>tilted conditional
+      distribution</strong> is:
+    </p>
+    <div class="equation" id="eq-cfg-target">
+      \[
+        \pi_0(x)=\frac{p_0(x\mid c)^{1+w}p_0(x)^{-w}}{Z_0}.
+      \]
+    </div>
+    <p>
+      Here \(c\) is fixed, \(Z_0\) is the finite normalizing constant, and
+      \(w\geq 0\) controls the extra preference for condition-consistent samples.
+      At \(w=0\), we recover the ordinary conditional distribution.
+      This is the target that motivates guidance; the next step is to apply the same
+      tilting idea at each noise level and derive its score.
+    </p>
+  </aside>
+
+  <p>
+    At noise level \(t\), apply the same reweighting to the noisy-data distribution:
+    multiply \(p_t(x\mid c)\) by \(p_t(c\mid x)^w\) and normalize.
+    Call this tilted density \(\widetilde\pi_t\). Bayes' rule converts the
+    condition likelihood into a ratio of conditional and unconditional densities.
+  </p>
+
+  <p>
+    Write \(s_c=\nabla_x\log p_t(x\mid c)\) and
+    \(s_u=\nabla_x\log p_t(x)\) for the conditional and unconditional scores.
+    Absorb the condition-only factor \(p(c)^w\) into the normalizer \(Z_t\),
+    then take the log-gradient of the rewritten density:
+  </p>
+
+  <div class="equation" id="eq-cfg-derivation">
+    \[
+      \begin{gathered}
+      p_t(c\mid x)=\frac{p_t(x\mid c)\,p(c)}{p_t(x)},\\[0.5em]
+      \widetilde\pi_t(x)=\frac{p_t(x\mid c)^{1+w}p_t(x)^{-w}}{Z_t},\\[0.5em]
+      \begin{aligned}
+      s_g&=\nabla_x\log\widetilde\pi_t(x)\\
+        &=(1+w)\nabla_x\log p_t(x\mid c)\\
+        &\quad-w\nabla_x\log p_t(x)\\
+        &=(1+w)s_c-ws_u.
+      \end{aligned}
+      \end{gathered}
+    \]
+  </div>
+
+  <p>
+    Because \(Z_t\) is constant with respect to \(x\), its log-gradient vanishes.
+    The score combination is therefore a consequence of the desired reweighting:
+    <strong>first specify the tilted density, then differentiate its log.</strong>
+    With exact conditional and unconditional scores, this gives a valid score for
+    \(\widetilde\pi_t\) at each noise level, without computing \(Z_t\). We use
+    that score in the diffusion sampler to steer generation toward the condition.<sup class="reference" id="fnref-cfg-sampling"><a href="#fn-cfg-sampling" role="doc-noteref" aria-label="Footnote: guided scores and exact sampling">*</a></sup>
+  </p>
+  <p>
+    In practice, the model estimates \(s_c\) and \(s_u\) at the
+    <strong>same noisy sample and noise level</strong>, with and without the condition.
+    Their difference supplies the <strong>guidance direction</strong> associated with
+    the condition likelihood. No separate classifier is needed; the score rule is the
+    implementation of this distributional idea, not an arbitrary subtraction of
+    predictions.<sup class="reference"><a href="#ref-cfg" aria-label="Reference 1">[1]</a></sup>
+  </p>
+</section>
+
+<section aria-labelledby="llm-guidance">
+  <h2 id="llm-guidance"><span class="part-number">02</span>Why LLM doesn't support guidance natively</h2>
+
+  <p>
+    More precisely: <strong>an autoregressive LLM can use guidance, but guiding each next token
+    is not the same as guiding the joint distribution of complete answers.</strong> Let
+    \(s=y_{&lt;t}\) be the already-generated prefix, \(p_+\) the strong predictor, and
+    \(p_-\) the reference. Assume both predictors put positive probability on the tokens
+    being compared.
+  </p>
+
+  <p>
+    The per-token guidance rule is straightforward: for each candidate next token \(a\),
+    take the strong model's log-probability and add \(w\) times its difference from the
+    reference model's log-probability. Applying softmax to these guided log-probabilities
+    gives \(q(a\mid s)\), the distribution used to sample the next token. Specifically,
+    exponentiation produces the unnormalized score \(r(a\mid s)\), and dividing by its
+    sum \(C_w(s)\) makes the probabilities sum to one:
+  </p>
+
+  <div class="equation" id="eq-token-guidance">
+    \[
+      \begin{aligned}
+        r(a\mid s)&=p_+(a\mid s)^{1+w}p_-(a\mid s)^{-w},\\
+        q(a\mid s)&=\frac{r(a\mid s)}{C_w(s)},\\
+        C_w(s)&=\sum_a r(a\mid s).
+      \end{aligned}
+    \]
+  </div>
+
+  <p>
+    Let \(P_+(y)\) and \(P_-(y)\) be the probabilities of a complete answer \(y\) under
+    the strong and reference models. Define \(Q^\star\) as the
+    <strong>target sequence-level guided distribution</strong>: weight each complete answer
+    by \(P_+(y)^{1+w}P_-(y)^{-w}\), then normalize once over all complete answers.
+  </p>
+
+  <p>
+    The single normalizing constant \(Z\) is the sum of these weights over all complete
+    answers, assumed finite. In contrast,
+    \(Q_{\mathrm{local}}\) is the distribution obtained by multiplying the
+    per-token normalized probabilities \(q(y_t\mid y_{&lt;t})\). The two distributions are:
+  </p>
+
+  <div class="equation" id="eq-sequence-guidance">
+    \[
+      \begin{aligned}
+        Q_{\mathrm{local}}(y)&=\frac{P_+(y)^{1+w}P_-(y)^{-w}}{\prod_t C_w(y_{&lt;t})},\\
+        Q^\star(y)&=\frac{P_+(y)^{1+w}P_-(y)^{-w}}{Z}.
+      \end{aligned}
+    \]
+  </div>
+
+  <p id="sequence-normalization-gap">
+    <strong>The mismatch is between the distribution we actually sample,
+    \(Q_{\mathrm{local}}\), and the target distribution, \(Q^\star\).</strong>
+    They have the same numerator, but different denominators: \(Z\) is the same for
+    every complete answer, whereas \(\prod_t C_w(y_{&lt;t})\) generally varies from one
+    answer to another because each answer follows a different sequence of prefixes.
+  </p>
+  <p id="sequence-normalization-consequence">
+    For example, two answers with equal guided weights have equal probability under
+    \(Q^\star\). Under \(Q_{\mathrm{local}}\), the answer with the smaller product
+    of token normalizers receives more probability. Both distributions are normalized;
+    the problem is that <strong>per-token normalization can change the relative
+    probabilities of complete answers</strong>, rather than merely rescaling all their
+    weights by one common constant.
+  </p>
+
+  <h3 id="lookahead">The missing term is lookahead</h3>
+  <p id="lookahead-motivation">
+    To recover the target distribution in <a href="#eq-sequence-guidance">Equation (4)</a>,
+    we need to ask: <strong>how can we guide each next-token decision so that the resulting
+    complete answer follows \(Q^\star\)?</strong> The required next-token distribution is \(Q^\star(a\mid s)\),
+    not just the locally normalized score \(q(a\mid s)\).
+  </p>
+  <p id="lookahead-branch-mass">
+    Choosing \(a\) selects a whole branch of complete answers, all beginning with
+    \(sa\). Its probability must equal the target probability mass of that entire
+    branch, conditional on \(s\). We must therefore sum over what could come
+    <em>after</em> \(a\), not just score \(a\) itself. This is the motivation
+    for lookahead.
+  </p>
+  <aside class="callout definition-box" id="lookahead-definition" aria-labelledby="lookahead-definition-title">
+    <p id="lookahead-definition-title"><strong>Definition: lookahead</strong></p>
+    <p>
+      <dfn>Lookahead</dfn> means accounting for the possible future continuations of a
+      candidate token when deciding whether to choose it now, rather than judging that
+      token only by its immediate score.
+    </p>
+    <p>
+      Here, its exact value is \(V(sa)\): the <strong>total unnormalized guided weight
+      of all completions</strong> after appending token \(a\) to prefix \(s\).
+      It sums over all futures, not just one predicted or best continuation, and is
+      <strong>not a probability</strong>.
+    </p>
+  </aside>
+  <p>
+    Conditioning on \(s\) cancels both the shared past-token factors and the global
+    normalizer \(Z\). The remaining weight of the branch beginning with \(a\) is
+    \(r(a\mid s)V(sa)\): the current score times the total weight of its possible
+    futures. With \(z\) ranging over remaining completions, this gives:
+  </p>
+
+  <div class="equation" id="eq-lookahead">
+    \[
+      \begin{aligned}
+      V(s)&=\sum_z\prod_i r(z_i\mid s z_{&lt;i}),\\[0.5em]
+      Q^\star(a\mid s)&=\frac{r(a\mid s)V(sa)}{V(s)},\\
+      V(s)&=\sum_b r(b\mid s)V(sb).
+      \end{aligned}
+    \]
+  </div>
+
+  <p id="lookahead-omission">
+    Ordinary per-token guidance for an LLM, as defined in
+    <a href="#eq-token-guidance">Equation (3)</a>, <strong>omits the lookahead factor
+    \(V(sa)\)</strong> and therefore need not recover the target sequence distribution
+    \(Q^\star\).
+  </p>
+
+  <h3 id="two-token-example">A two-token counterexample</h3>
+  <p>
+    Both models choose \(A\) or \(B\) with probability 0.5. After \(A\), both are uniform
+    over \(1,2\). After \(B\), the strong model predicts \((0.9,0.1)\), while the
+    reference stays at \((0.5,0.5)\). At \(w=1\), per-token guidance still chooses
+    \(B\) with <strong>50% probability</strong>, but \(Q^\star\) requires
+    <strong>62.1%</strong>: it accounts for the extra guided weight in the continuations
+    after \(B\).
+  </p>
+
+  <figure class="toy" aria-labelledby="toy-caption">
+    <div class="toy-controls">
+      <label for="guidance-weight">Guidance strength \(w\)</label>
+      <input id="guidance-weight" type="range" min="0" max="3" step="0.25" value="1" aria-describedby="toy-caption">
+      <output id="guidance-weight-value" for="guidance-weight">1.00</output>
+    </div>
+    <div class="probability-row">
+      <span>Local: first token B</span>
+      <span class="probability-track" aria-hidden="true"><span class="probability-fill" style="width:50%"></span></span>
+      <span class="probability-value">50.0%</span>
+    </div>
+    <div class="probability-row">
+      <span>Joint: first token B</span>
+      <span class="probability-track" aria-hidden="true"><span class="probability-fill probability-fill--target" id="global-b-bar" style="width:62.1212%"></span></span>
+      <span class="probability-value" id="global-b-value">62.1%</span>
+    </div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Two-token probability comparison">
+      <table>
+        <caption>Complete-sequence probabilities</caption>
+        <thead><tr><th scope="col">Sequence</th><th scope="col">Strong \(P_+\)</th><th scope="col">Reference \(P_-\)</th><th scope="col">Local \(Q\)</th><th scope="col" class="table-target">Joint \(Q^\star\)</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">A1</th><td>0.250</td><td>0.250</td><td data-local-probability="0">0.250</td><td class="table-target" data-target-probability="0">0.189</td></tr>
+          <tr><th scope="row">A2</th><td>0.250</td><td>0.250</td><td data-local-probability="1">0.250</td><td class="table-target" data-target-probability="1">0.189</td></tr>
+          <tr><th scope="row">B1</th><td>0.450</td><td>0.250</td><td data-local-probability="2">0.494</td><td class="table-target" data-target-probability="2">0.614</td></tr>
+          <tr><th scope="row">B2</th><td>0.050</td><td>0.250</td><td data-local-probability="3">0.006</td><td class="table-target" data-target-probability="3">0.008</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figcaption id="toy-caption">
+      <strong>The local rule cannot see the advantage waiting after B.</strong>
+      \(C_w(A)=1\), while \(C_w(B)=\)<span id="normalizer-b">1.640</span>.
+      At \(w=1\), this reproduces Table 1 of the source note. The probabilities are
+      analytically computed, not model evaluation scores.
+    </figcaption>
+  </figure>
+
+  <p id="guidance-literature-scope">
+    <strong>Shared benchmarks, not a controlled architecture comparison.</strong>
+    Both literature tables below use GSM8K and HumanEval, but the models, prompts,
+    guidance references, and decoding protocols differ. Each change compares guidance
+    with its own model's unguided baseline; cross-paper differences do not isolate
+    the effect of looping.
+  </p>
+  <figure class="post-figure" id="llm-guidance-paper-results" aria-labelledby="llm-guidance-paper-results-caption">
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Published guidance results on ordinary language models">
+      <table class="literature-table">
+        <caption>Ordinary LLMs on the overlapping benchmarks. Scores (%); change in percentage points (pp).</caption>
+        <thead><tr><th scope="col">Model / guidance</th><th scope="col">Benchmark / protocol</th><th scope="col">Unguided</th><th scope="col">Guided</th><th scope="col">Change</th></tr></thead>
+        <tbody>
+          <tr data-result="cd-gsm8k">
+            <th scope="row">LLaMA-65B<span class="result-setting">Contrastive decoding <a href="#ref-cd-reasoning" aria-label="Reference 8">[8]</a></span></th>
+            <td><span data-benchmark>GSM8K</span><span class="result-setting">Exact match<br>8-shot CoT; greedy</span></td>
+            <td data-score="baseline">51.0</td><td data-score="guided">56.8</td><td data-score="delta" class="result-gain">+5.8</td>
+          </tr>
+          <tr data-result="cfg-humaneval">
+            <th scope="row">CodeGen-2B-mono<span class="result-setting">CFG <a href="#ref-lm-cfg" aria-label="Reference 7">[7]</a></span></th>
+            <td><span data-benchmark>HumanEval</span><span class="result-setting">pass@1; code completion<br>Sampling, temperature 0.2</span></td>
+            <td data-score="baseline">19.5</td><td data-score="guided">20.9</td><td data-score="delta" class="result-gain">+1.4</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <figcaption id="llm-guidance-paper-results-caption">
+      <strong>LLM guidance: results from the literature.</strong>
+      CFG: <a href="https://arxiv.org/html/2306.17806v1">Sanchez et al., Table 2</a>,
+      \(\gamma=1.5\) versus \(1\).
+      Contrastive decoding: <a href="https://arxiv.org/html/2309.09117v2">O'Brien and Lewis, Section 3.3</a>,
+      a 1.5B reference, \(\alpha=0.1\), \(\beta=0.5\).
+      Their method also masks implausible tokens; it is not exactly the unmasked rule in Equation (3).
+    </figcaption>
+  </figure>
+  <p id="llm-guidance-results-takeaway">
+    <strong>Per-token guidance can already improve ordinary LLMs.</strong>
+    The lookahead argument identifies a
+    distributional mismatch; it does not say that local guidance cannot improve answers.
+  </p>
+</section>
+
+<section aria-labelledby="loop-guidance">
+  <h2 id="loop-guidance"><span class="part-number">03</span>Loop models enable guidance with shared hidden states</h2>
+
+  <p id="loop-guidance-transition">
+    <strong>Looped models, however, offer a way to mitigate this mismatch.</strong>
+    If their predictions at different loop depths have small logit differences,
+    the error from omitting lookahead can be small, as we show below.
+  </p>
+
+  <aside class="callout definition-box" id="loop-guidance-definition" aria-labelledby="loop-guidance-definition-title">
+    <p id="loop-guidance-definition-title"><strong>Guidance in looped models: LoopCD</strong></p>
+    <p>
+      A looped model reuses the same block before generating each token. Readouts after
+      \(E\) and \(K&gt;E\) loops give predictions \(p_E\) and \(p_K\) for the
+      <em>same prefix</em>. The earlier readout provides a weaker reference without
+      another model. Apple's <dfn>LoopCD</dfn> uses this contrast for inference-time
+      guidance, without retraining.<sup class="reference"><a href="#ref-loopcd" aria-label="Reference 6">[6]</a></sup>
+    </p>
+
+    <figure class="loop-figure">
+      <div class="loop-path" role="img" aria-label="An early hidden state h E is refined by more applications of the same block to h K. The two readouts are contrasted to form guided logits.">
+        <div class="loop-stage"><strong>\(h_E\;\longrightarrow\;z_E\)</strong><span>Early readout</span></div>
+        <span class="loop-arrow" aria-hidden="true">&rarr;</span>
+        <div class="loop-stage"><strong>\(h_K\;\longrightarrow\;z_K\)</strong><span>More loops, same block</span></div>
+        <span class="loop-arrow" aria-hidden="true">&rarr;</span>
+        <div class="loop-stage loop-stage--guided"><strong>\(z_K+w(z_K-z_E)\)</strong><span>Guided readout</span></div>
+      </div>
+      <figcaption>
+        <strong>One trajectory, two readouts.</strong> Guidance amplifies the change
+        from the earlier prediction to the later one.
+      </figcaption>
+    </figure>
+
+    <p>
+      <strong>LoopCD-Logits.</strong> Read out both states, then extrapolate away from
+      the early logits. The paper uses the first loop as the reference, \(E=1\):
+    </p>
+    <div class="equation" id="eq-loop-guidance">
+      \[
+        \begin{gathered}
+        z_g=z_K+w(z_K-z_E),\\
+        \operatorname{softmax}(z_g)\propto p_K^{1+w}p_E^{-w}.
+        \end{gathered}
+      \]
+    </div>
+    <p>
+      <strong>LoopCD-Hidden.</strong> Apply \(h_g=h_K+w(h_K-h_E)\) before the shared
+      output layers. The probability identity above need not hold when those layers
+      are nonlinear. Our analysis below concerns the <strong>logit variant</strong>.
+    </p>
+  </aside>
+
+  <h3 id="loopcd-results-heading">LoopCD on the overlapping benchmarks</h3>
+  <p>
+    These fixed-strength logit-guidance rows use the same benchmark names as the
+    ordinary-LLM table. Each guided/unguided pair shares its own checkpoint and
+    recurrent depth.<sup class="reference"><a href="#ref-loopcd" aria-label="Reference 6">[6]</a></sup>
+  </p>
+  <figure class="post-figure" id="loopcd-paper-results" aria-labelledby="loopcd-paper-results-caption">
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Published LoopCD results against matched unguided baselines">
+      <table class="literature-table">
+        <caption>LoopCD-Logits, fixed strength. Scores (%); change in pp. Cross-paper protocols remain unmatched.</caption>
+        <thead><tr><th scope="col">Model / guidance</th><th scope="col">Benchmark / protocol</th><th scope="col">Unguided</th><th scope="col">Guided</th><th scope="col">Change</th></tr></thead>
+        <tbody>
+          <tr data-result="loopcd-ouro-gsm8k">
+            <th scope="row">Ouro-2.6B<span class="result-setting">Logits, fixed; \(w=0.3\)</span></th>
+            <td><span data-benchmark>GSM8K</span><span class="result-setting">Answer accuracy<br>3-shot; greedy</span></td>
+            <td data-score="baseline">81.27</td><td data-score="guided">82.34</td><td data-score="delta" class="result-gain">+1.07</td>
+          </tr>
+          <tr data-result="loopcd-huginn-gsm8k">
+            <th scope="row">Huginn-0125, 32 loops<span class="result-setting">Logits, fixed; \(w=0.2\)</span></th>
+            <td><span data-benchmark>GSM8K</span><span class="result-setting">Strict answer match<br>8-shot CoT; greedy</span></td>
+            <td data-score="baseline">42.91</td><td data-score="guided">41.62</td><td data-score="delta" class="result-loss">-1.29</td>
+          </tr>
+          <tr data-result="loopcd-ouro-humaneval">
+            <th scope="row">Ouro-2.6B<span class="result-setting">Logits, fixed; \(w=0.3\)</span></th>
+            <td><span data-benchmark>HumanEval</span><span class="result-setting">pass@1; EvalPlus base tests<br>0-shot chat; greedy</span></td>
+            <td data-score="baseline">75.61</td><td data-score="guided">77.44</td><td data-score="delta" class="result-gain">+1.83</td>
+          </tr>
+          <tr data-result="loopcd-huginn-humaneval">
+            <th scope="row">Huginn-0125, 32 loops<span class="result-setting">Logits, fixed; \(w=0.2\)</span></th>
+            <td><span data-benchmark>HumanEval</span><span class="result-setting">pass@1; EvalPlus base tests<br>0-shot chat; greedy</span></td>
+            <td data-score="baseline">23.17</td><td data-score="guided">27.44</td><td data-score="delta" class="result-gain">+4.27</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <figcaption id="loopcd-paper-results-caption">
+      <strong>Same tasks, different experimental protocols.</strong>
+      <a href="https://arxiv.org/html/2610.02185v1">Liu et al., Tables A5 and 1(b); Appendix B</a>.
+      HumanEval uses greedy chat generation, unlike CodeGen's sampled code completion.
+      GSM8K prompting and answer extraction are not controlled across papers.
+    </figcaption>
+  </figure>
+  <p id="loopcd-results-interpretation">
+    <strong>These results do not establish that loop guidance is stronger.</strong>
+    They show model- and task-dependent effects. The analysis below offers a
+    conditional explanation of normalization error, not an empirical architecture ranking.
+  </p>
+  <p id="loopcd-compute-results">
+    In a separate seven-benchmark multiple-choice study, half-depth LoopCD matches or
+    exceeds full-depth baselines with 22.5&ndash;48.2% fewer theoretical forward FLOPs,
+    not measured wall-clock savings.<sup class="reference"><a href="#ref-loopcd" aria-label="Reference 6">[6]</a></sup>
+  </p>
+
+  <h3 id="shared-loop-space">Why loops help</h3>
+  <p>
+    The key is not that two readouts come from adjacent loops. All loop iterations reuse
+    the same block and output head, so their representations share a common coordinate
+    system. The early and late readouts used for guidance may be many iterations apart.
+  </p>
+  <p id="loop-small-difference-assumption">
+    <strong>Assumption.</strong> For the same prefix, the readouts used for guidance have
+    small logit differences: \(z_K=z_E+\epsilon u\), with small \(\epsilon\) and
+    bounded \(u\). This is an empirical assumption about output variation across loop
+    depths, not a requirement that the depths be adjacent. Sharing a representation
+    space motivates checking this assumption; it does not by itself establish it.
+  </p>
+
+  <figure class="post-figure" id="loop-output-variance">
+    <picture>
+      <source media="(max-width: 640px)" srcset="{{ '/images/blog/guidance/loop-output-variation-illustrative-mobile.svg' | relative_url }}">
+      <img src="{{ '/images/blog/guidance/loop-output-variation-illustrative.svg' | relative_url }}" width="760" height="350" loading="lazy"
+        alt="LLM-generated illustration, not experimental data: a small centered-logit RMS difference decreases across loop depths relative to a fixed final readout at loop 32.">
+    </picture>
+    <figcaption>
+      <strong>LLM-generated illustration, not experimental data.</strong>
+      An idealized curve comparing every loop depth with the same final readout
+      (\(K=32\)) on a matched prefix, not just adjacent loops. Centered logit RMS
+      means subtracting each readout's vocabulary mean before taking the root-mean-square
+      difference. The <a href="{{ '/images/blog/guidance/loop-output-variation-illustrative.json' | relative_url }}">values are invented</a>;
+      the final zero is by definition, not evidence of convergence. Actual measurements
+      remain pending, and this illustration does not validate the small-\(\epsilon\) assumption.
+    </figcaption>
+  </figure>
+
+  <p>
+    To see why this assumption matters, return to the earlier normalization problem.
+    Per-token guidance differs from the sequence-level target through the prefix-dependent
+    factors \(C_w(s)\). We therefore need to connect these factors to the variation
+    between loop outputs.
+  </p>
+  <p>
+    With the later predictor \(p_K\) as the strong model and the earlier predictor
+    \(p_E\) as the reference, the normalizer separates into the change caused by
+    guidance and the disagreement between loop predictions:
+  </p>
+  <div class="equation" id="eq-normalizer-decomposition">
+    \[
+      \begin{aligned}
+      \log C_w(s)&=\underbrace{\operatorname{KL}(p_K\Vert q)}_{\text{guidance-step size}}\\
+      &\quad+\underbrace{w\operatorname{KL}(p_K\Vert p_E)}_{\text{loop disagreement}}.
+      \end{aligned}
+    \]
+  </div>
+  <details id="normalizer-derivation">
+    <summary>Derivation of Equation (7)</summary>
+    <p>
+      Fix the prefix \(s\) and suppress the token arguments. All expectations below
+      are over tokens sampled from \(p_K\). Starting from
+      <a href="#eq-token-guidance">Equation (3)</a>:
+    </p>
+    <div class="equation" id="eq-normalizer-proof">
+      \[
+        \begin{gathered}
+        q=\frac{p_K^{1+w}p_E^{-w}}{C_w(s)},\\[0.7em]
+        \log\frac{p_K}{q}=\log C_w(s)-w\log\frac{p_K}{p_E},\\[0.7em]
+        \operatorname{KL}(p_K\Vert q)
+          =\mathbb E_{p_K}\!\left[\log\frac{p_K}{q}\right]\\
+          =\log C_w(s)-w\mathbb E_{p_K}\!\left[\log\frac{p_K}{p_E}\right]\\
+          =\log C_w(s)-w\operatorname{KL}(p_K\Vert p_E).
+        \end{gathered}
+      \]
+    </div>
+    <p>
+      The normalizer is constant over tokens at this fixed prefix. Moving the second
+      KL term to the other side gives <a href="#eq-normalizer-decomposition">Equation (7)</a>.
+    </p>
+  </details>
+  <p>
+    Both terms are nonnegative. Under the small-\(\epsilon\) assumption above, and with
+    \(w\) fixed and bounded, the constant and linear terms cancel:
+  </p>
+  <div class="equation" id="eq-small-perturbation">
+    \[
+      \begin{aligned}
+      \log C_w&=\tfrac12 w(1+w)\epsilon^2\operatorname{Var}_{p_E}(u)\\
+      &\quad+O(\epsilon^3).
+      \end{aligned}
+    \]
+  </div>
+  <details id="small-perturbation-derivation">
+    <summary>Derivation of Equation (9)</summary>
+    <p>
+      Fix the prefix and let \(z_K=z_E+\epsilon u\). Softmax converts this logit
+      difference into an exponential reweighting of the earlier predictor:
+    </p>
+    <div class="equation equation--scrollable" id="eq-exponential-reweighting" tabindex="0" role="region" aria-label="Equation (10)">
+      \[
+        \begin{gathered}
+        p_K(a)=\frac{p_E(a)e^{\epsilon u(a)}}{\mathbb E_{p_E}[e^{\epsilon u}]},\\[0.7em]
+        C_w=\sum_a p_K(a)^{1+w}p_E(a)^{-w}=\frac{\mathbb E_{p_E}[e^{(1+w)\epsilon u}]}{\bigl(\mathbb E_{p_E}[e^{\epsilon u}]\bigr)^{1+w}}.
+        \end{gathered}
+      \]
+    </div>
+    <p>
+      For bounded \(u\), the log of its exponential moment has the following Taylor
+      expansion around \(t=0\). Its constant term is zero because
+      \(\log\mathbb E_{p_E}[1]=0\):
+    </p>
+    <div class="equation equation--scrollable" id="eq-log-moment-expansion" tabindex="0" role="region" aria-label="Equation (11)">
+      \[
+        \log\mathbb E_{p_E}[e^{tu}]=t\mathbb E_{p_E}[u]+\tfrac12 t^2\operatorname{Var}_{p_E}(u)+O(t^3).
+      \]
+    </div>
+    <p>
+      Take logs of the normalizer above, then substitute the expansion at
+      \(t=(1+w)\epsilon\) and \(t=\epsilon\). The linear coefficient cancels,
+      while the quadratic coefficient simplifies:
+    </p>
+    <div class="equation equation--scrollable" id="eq-normalizer-expansion" tabindex="0" role="region" aria-label="Equation (12)">
+      \[
+        \begin{aligned}
+        \log C_w&=\log\mathbb E_{p_E}[e^{(1+w)\epsilon u}]-(1+w)\log\mathbb E_{p_E}[e^{\epsilon u}]\\[0.4em]
+          &=\tfrac12\bigl[(1+w)^2-(1+w)\bigr]\epsilon^2\operatorname{Var}_{p_E}(u)+O(\epsilon^3)\\[0.4em]
+          &=\tfrac12 w(1+w)\epsilon^2\operatorname{Var}_{p_E}(u)+O(\epsilon^3).
+        \end{aligned}
+      \]
+    </div>
+    <p>
+      This gives <a href="#eq-small-perturbation">Equation (9)</a>. With \(w\) fixed and bounded,
+      both Taylor remainders remain \(O(\epsilon^3)\).
+    </p>
+  </details>
+  <div id="sequence-normalizer-bridge">
+    <h3 id="sequence-normalizer">What about the sequence normalizer?</h3>
+    <p>
+      <a href="#eq-small-perturbation">Equation (9)</a> controls the local normalizer
+      \(C_w(s)\); it does not remove the global normalizer \(Z\).
+      For answers of fixed length \(T\), \(Z\) is the lookahead value at the empty
+      prefix, or equivalently the average of the path-normalizer products:
+    </p>
+    <div class="equation" id="eq-global-normalizer">
+      \[
+        \begin{aligned}
+        Z&=V(\varnothing)\\
+         &=\mathbb E_{y\sim Q_{\mathrm{local}}}
+           \!\left[\prod_{t=1}^{T}C_w(y_{&lt;t})\right].
+        \end{aligned}
+      \]
+    </div>
+    <p id="uniform-normalizer-condition">
+      Suppose \(0\leq\log C_w(s)\leq\delta\) at <strong>every relevant prefix</strong>.
+      Each path product lies between \(1\) and \(e^{T\delta}\), so its average
+      \(Z\) does too. Combining this with <a href="#eq-sequence-guidance">Equation (4)</a>
+      bounds the mismatch for every complete answer:
+    </p>
+    <div class="equation" id="eq-sequence-mismatch-bound">
+      \[
+        \begin{gathered}
+        0\leq\log Z\leq T\delta,\\[0.4em]
+        \left|\log\frac{Q^\star(y)}{Q_{\mathrm{local}}(y)}\right|\leq T\delta.
+        \end{gathered}
+      \]
+    </div>
+    <p id="sequence-normalizer-conclusion">
+      When \(T\delta\) is small, the per-token sampling distribution and the target
+      sequence-level distribution in <a href="#eq-sequence-guidance">Equation (4)</a>
+      assign nearly the same probability to each complete answer.
+      With fixed \(w\), uniformly bounded \(u\), and the small-logit-difference
+      assumption holding across prefixes, \(\delta=O(\epsilon^2)\).
+      The whole-sequence log-probability-ratio bound scales as \(O(T\epsilon^2)\),
+      reflecting accumulation across \(T\) tokens.
+      Guidance changes token log-odds at first order, \(O(w\epsilon)\).
+    </p>
+    <details id="sequence-normalizer-derivation">
+      <summary>Derivation of Equations (13) and (14)</summary>
+      <p>
+        Substitute \(r=qC_w\) into the total weight of all complete answers and sum
+        over them to obtain <a href="#eq-global-normalizer">Equation (13)</a>.
+        The expectation lies in the same interval \([1,e^{T\delta}]\) as every path
+        product. Taking logs of <a href="#eq-sequence-guidance">Equation (4)</a> gives:
+      </p>
+      <div class="equation" id="eq-sequence-mismatch-proof">
+        \[
+          \begin{gathered}
+          \log\frac{Q^\star(y)}{Q_{\mathrm{local}}(y)}\\
+          =\sum_{t=1}^{T}\log C_w(y_{&lt;t})-\log Z.
+          \end{gathered}
+        \]
+      </div>
+      <p>
+        Both the sum and \(\log Z\) lie in \([0,T\delta]\), so their difference lies
+        in \([-T\delta,T\delta]\). This proves
+        <a href="#eq-sequence-mismatch-bound">Equation (14)</a>.
+      </p>
+    </details>
+  </div>
+
+  <h3 id="loop-diffusion-connection">How loops relate to diffusion</h3>
+  <p>
+    Both reuse a learned model to iteratively refine a continuous state. A diffusion
+    sampler repeatedly uses a denoising model to update a noisy sample; a looped language
+    model reuses the same block to update its hidden state for a fixed prefix. In
+    diffusion, the iteration is tied to a noise level; in a looped model, it controls
+    how much computation is spent before the next token is emitted.
+  </p>
+  <p>
+    The connection to guidance is the ability to <strong>contrast compatible
+    predictions</strong>. CFG compares conditional and unconditional predictions at the
+    <em>same noisy state and noise level</em>; loop guidance compares early and later
+    readouts at the <em>same prefix</em>. Both amplify a preferred prediction relative to
+    a reference, but obtain that reference differently: by changing conditioning in CFG,
+    and by changing computation depth in loop guidance.
+  </p>
+  <p>
+    This analogy does not make a loop iteration a diffusion step. Weight sharing alone
+    does not supply a denoising objective or make a hidden-state update a score, and the
+    per-prefix normalizer still exists. The result above is narrower: under the
+    small-logit-difference assumption and at fixed guidance strength, loop guidance
+    produces a first-order change in log-odds with a second-order normalization cost.
+  </p>
+  <p id="whole-answer-outlook">
+    A more diffusion-like extension would train loops to denoise a representation of
+    the whole answer and revise all positions before decoding; this is a possible
+    future design, not a requirement for the per-token guidance discussed here.
+  </p>
+
+  <aside class="callout">
+    <p><strong>What the "cheatcode" actually buys.</strong> A looped model can supply its own
+    computationally weaker reference, making self-guidance a natural intervention without a
+    second separately trained predictor. The shared state space makes the contrast meaningful;
+    small differences between readouts can make it locally well controlled. This transfers
+    the prediction-contrast idea from diffusion without assuming that recurrent computation
+    is itself a diffusion sampler.</p>
+  </aside>
+
+  <details>
+    <summary>What would test this mechanism?</summary>
+    <p>
+      At tokens where guidance changes the answer, compare candidate continuation values.
+      Roll out completions under \(Q_{\mathrm{local}}\), accumulate each completion's
+      future \(\log C_w\), and take a log-mean-exp across rollouts to estimate
+      \(\log V(sa)\). If differences between candidates are small compared with the
+      guidance shift, the local approximation is effective at those decisions.
+    </p>
+    <p>
+      Record \(\operatorname{KL}(p_K\Vert q)\) and
+      \(w\operatorname{KL}(p_K\Vert p_E)\) separately. Computing the normalizers uses
+      distributions already available to guided decoding, but the diagnostic continuation
+      rollouts themselves require additional inference. This separates a good depth pair from
+      simply making the guidance step smaller.
+    </p>
+  </details>
+</section>
+
+<footer class="references">
+  <p class="source-note" id="fn-cfg-sampling" role="doc-footnote">
+    <sup>*</sup> A valid tilted score at each noise level does not by itself guarantee exact
+    sampling from the corresponding tilted clean-data distribution. This distinction is
+    well studied in the literature; see Bradley and Nakkiran,
+    <a href="#ref-pcg"><em>Classifier-Free Guidance is a Predictor-Corrector</em> [2]</a>,
+    and Chidambaram et al.,
+    <a href="#ref-guidance"><em>What does guidance do?</em> [3]</a>.
+    <a href="#fnref-cfg-sampling" role="doc-backlink" aria-label="Return to the diffusion section">&larr; Back to text</a>
+  </p>
+  <h3>Source and further reading</h3>
+  <p class="source-note">
+    Adapted from <a href="{{ '/assets/papers/guidance-normalization-looped-models.pdf' | relative_url }}"><em>Guidance,
+    Normalization, and Looped Models</em></a> (October 20, 2026). The PDF contains the full
+    derivations, both figures, and the fixed-output reference sweep. No new model experiments
+    are claimed here.
+  </p>
+  <ol>
+    <li id="ref-cfg">Ho and Salimans. <a href="https://arxiv.org/abs/2207.12598"><em>Classifier-Free Diffusion Guidance.</em></a> 2022.</li>
+    <li id="ref-pcg">Bradley and Nakkiran. <a href="https://arxiv.org/abs/2408.09000"><em>Classifier-Free Guidance is a Predictor-Corrector.</em></a> 2024 preprint.</li>
+    <li id="ref-guidance">Chidambaram et al. <a href="https://arxiv.org/abs/2409.13074"><em>What does guidance do? A fine-grained analysis in a simple setting.</em></a> 2024.</li>
+    <li id="ref-fudge">Yang and Klein. <a href="https://arxiv.org/abs/2104.05218"><em>FUDGE: Controlled Text Generation With Future Discriminators.</em></a> 2021.</li>
+    <li id="ref-autoguidance">Karras et al. <a href="https://arxiv.org/abs/2406.02507"><em>Guiding a Diffusion Model with a Bad Version of Itself.</em></a> 2024.</li>
+    <li id="ref-loopcd">Liu et al. (Apple). <a href="https://arxiv.org/abs/2610.02185"><em>Decoding Looped Transformers Better for (Almost) Free.</em></a> 2026.</li>
+    <li id="ref-lm-cfg">Sanchez et al. <a href="https://arxiv.org/abs/2306.17806"><em>Stay on topic with Classifier-Free Guidance.</em></a> 2023.</li>
+    <li id="ref-cd-reasoning">O'Brien and Lewis. <a href="https://arxiv.org/abs/2309.09117"><em>Contrastive Decoding Improves Reasoning in Large Language Models.</em></a> 2023.</li>
+  </ol>
+</footer>

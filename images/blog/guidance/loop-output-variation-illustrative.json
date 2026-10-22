@@ -1,0 +1,138 @@
+{
+  "author": "LLM-generated illustration",
+  "experimental_data": false,
+  "description": "Invented target curve; no model outputs or experimental records were used.",
+  "metric": "RMS difference between vocabulary-centered logits at a given depth and at depth 32.",
+  "reference_depth": 32,
+  "endpoint_note": "The reference depth has zero distance by definition, not as evidence of convergence.",
+  "points": [
+    {
+      "depth": 1,
+      "illustrative_rms": 0.165
+    },
+    {
+      "depth": 2,
+      "illustrative_rms": 0.147394
+    },
+    {
+      "depth": 3,
+      "illustrative_rms": 0.131763
+    },
+    {
+      "depth": 4,
+      "illustrative_rms": 0.117873
+    },
+    {
+      "depth": 5,
+      "illustrative_rms": 0.105521
+    },
+    {
+      "depth": 6,
+      "illustrative_rms": 0.094525
+    },
+    {
+      "depth": 7,
+      "illustrative_rms": 0.084727
+    },
+    {
+      "depth": 8,
+      "illustrative_rms": 0.075985
+    },
+    {
+      "depth": 9,
+      "illustrative_rms": 0.068176
+    },
+    {
+      "depth": 10,
+      "illustrative_rms": 0.061189
+    },
+    {
+      "depth": 11,
+      "illustrative_rms": 0.054929
+    },
+    {
+      "depth": 12,
+      "illustrative_rms": 0.04931
+    },
+    {
+      "depth": 13,
+      "illustrative_rms": 0.044256
+    },
+    {
+      "depth": 14,
+      "illustrative_rms": 0.039701
+    },
+    {
+      "depth": 15,
+      "illustrative_rms": 0.035586
+    },
+    {
+      "depth": 16,
+      "illustrative_rms": 0.031861
+    },
+    {
+      "depth": 17,
+      "illustrative_rms": 0.028478
+    },
+    {
+      "depth": 18,
+      "illustrative_rms": 0.025398
+    },
+    {
+      "depth": 19,
+      "illustrative_rms": 0.022585
+    },
+    {
+      "depth": 20,
+      "illustrative_rms": 0.020008
+    },
+    {
+      "depth": 21,
+      "illustrative_rms": 0.017639
+    },
+    {
+      "depth": 22,
+      "illustrative_rms": 0.015454
+    },
+    {
+      "depth": 23,
+      "illustrative_rms": 0.01343
+    },
+    {
+      "depth": 24,
+      "illustrative_rms": 0.01155
+    },
+    {
+      "depth": 25,
+      "illustrative_rms": 0.009796
+    },
+    {
+      "depth": 26,
+      "illustrative_rms": 0.008153
+    },
+    {
+      "depth": 27,
+      "illustrative_rms": 0.006609
+    },
+    {
+      "depth": 28,
+      "illustrative_rms": 0.005151
+    },
+    {
+      "depth": 29,
+      "illustrative_rms": 0.003769
+    },
+    {
+      "depth": 30,
+      "illustrative_rms": 0.002456
+    },
+    {
+      "depth": 31,
+      "illustrative_rms": 0.001202
+    },
+    {
+      "depth": 32,
+      "illustrative_rms": 0
+    }
+  ]
+}
