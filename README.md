@@ -15,11 +15,16 @@ See more info at https://academicpages.github.io/
 
 ## Running locally
 
-### Guidance essay preview
+### Guidance essay
 
-The guidance essay is on local branch `preview/guidance-loop-results`. Its draft
-route is `/blog/2026/10/guidance-in-looped-models/`; previewing it does not publish
-it to the homepage.
+The guidance essay is published at
+[Guidance is becoming a cheat code for LLMs](https://nicholas0228.github.io/blog/2026/10/guidance-in-looped-models/).
+It appears in the Blog index and the homepage's News section.
+
+Collaborators can edit the [article source](https://github.com/Nicholas0228/Nicholas0228.github.io/edit/main/_posts/2026-10-22-guidance-in-looped-models.html)
+on GitHub or in a local checkout, and submit changes to `main` directly if they
+have write access, or through a pull request. The author names and homepage links
+are in the article's YAML front matter; the prose below is HTML with LaTeX math.
 
 - Article: `_posts/2026-10-22-guidance-in-looped-models.html`
 - Layout: `_layouts/essay.html`

@@ -10,6 +10,8 @@ authors:
     url: https://nicholas0228.github.io/
   - name: Yifei Wang
     url: https://a-little-hoof.github.io/
+  - name: Steven Wu
+    url: https://zstevenwu.com/
 excerpt: "Guidance keeps appearing in generative models. Loops offer a useful reference predictor—and a way to revisit the gap between guiding a token and guiding a whole answer."
 tags:
   - guidance
@@ -336,7 +338,7 @@ tags:
   <figcaption><strong>Intermediate-to-final logit gaps.</strong> Left: centered RMS; right: normalized by final-logit RMS. Shading: 95% bootstrap intervals.</figcaption>
 </figure>
 
-<p><strong>The looped models' mean gaps are 2.8–14.1 times smaller</strong> across the twelve loop-versus-layer comparisons at 25%, 50%, and 75% readout depth. Every paired 95% bootstrap interval for the ratio lies below one. At half depth, for example, Huginn's gap is 0.268 times Pythia's, with interval [0.261, 0.276]; Ouro's is 0.203 times Pythia's, with interval [0.199, 0.209]. The ordering survives both the scale normalization in the right panel and a check using only the question prefixes, before any answer text.</p>
+<p><strong>The looped models' mean gaps are 2.8–14.1 times smaller</strong> across all twelve comparisons. Every paired 95% bootstrap interval for the ratio lies below one. The ordering also holds after scale normalization and when using only question prefixes, before any answer text.</p>
 
 <details class="proof" id="measurement-protocol">
   <summary>Read the measurement protocol and its scope</summary>
@@ -344,13 +346,12 @@ tags:
     <p>The models are frozen base checkpoints. Inputs use a common plain-text, eight-shot Q/A format. Answer-prefix positions come from cached Huginn-32 continuations, with no filtering for answer correctness. We selected shared character boundaries that round-trip exactly through all four tokenizers, including the prompt boundary. This matches text, not token IDs across different vocabularies.</p>
     <p>Intermediate states use each architecture's native final normalization and output head, including Huginn's coda. We did not fit a tuned lens. Native forwards use BF16; full-vocabulary statistics use float64 at temperature one. A native-forward check and a future-token control passed at all 84 audited model/depth settings. An independent audit recomputed 28,672 depth-position records.</p>
     <p>Intervals resample the 128 questions, retaining each question's eight positions together; paired comparisons resample the same questions for both models. We used 5,000 bootstrap draws. These are individual intervals over the sampled questions, not simultaneous intervals or estimates of variation across training seeds.</p>
+    <p>The twelve comparisons pair each looped model with each ordinary Transformer at 25%, 50%, and 75% readout depth. At half depth, Huginn's gap is 0.268 times Pythia's, with a 95% interval of [0.261, 0.276]; Ouro's is 0.203 times Pythia's, with interval [0.199, 0.209].</p>
     <p>The normalized gap divides by the final readout's centered RMS at each position before averaging. Both plot axes start at zero. Lines connect the measured depths; the final-depth zero is omitted because it is true by definition.</p>
     <p>Depth fractions are a comparison convention, not equal FLOPs or equal predictor competence. The models differ in architecture, training, vocabulary, and size. Their gaps support a statement about these checkpoints and readout procedures; they do not isolate weight sharing as the cause. Ordinary layers may also benefit from a trained intermediate readout.</p>
     <p>LoopCD's first-loop reference deserves separate care: it is 1/32 of the deployed depth for Huginn but 1/4 for Ouro. We therefore do not present “first versus final” as a matched-depth comparison. The source report includes that diagnostic separately.</p>
   </div>
 </details>
-
-<p>These results support the comparative premise: for these models, loop readouts are much closer to the final logits than ordinary intermediate-layer readouts are. They do not yet certify the uniform small-difference assumption used in the sequence bound. In particular, smaller RMS need not make the quadratic expansion numerically accurate at every prefix.</p>
 
 <details class="proof" id="measurement-taylor">
   <summary>How accurate is the quadratic approximation itself?</summary>
@@ -359,6 +360,11 @@ tags:
     <p>Nor are all tokenwise gaps tiny: even at three-quarter depth, the largest observed absolute centered logit difference is 5.60 for Huginn and 6.44 for Ouro. A small vocabulary-average gap can coexist with larger differences on particular tokens. The empirical result is therefore evidence for closer readouts, while the joint-distribution guarantee remains conditional on a stronger bound.</p>
   </div>
 </details>
+
+<div class="key-result" id="measurement-takeaway">
+  <p><strong>Closer readouts make the normalization approximation more plausible.</strong> At fixed guidance strength, uniformly small logit differences change token log-odds at first order; the normalization mismatch begins at second order, and the Taylor remainder at third order. This is how sequential guidance can approximate guidance over whole answers.</p>
+  <p>Our test establishes the closer-readout comparison for these checkpoints. It does not establish uniform smallness or reliable relative Taylor accuracy. The next step is to measure the accumulated normalization mismatch across complete answers.</p>
+</div>
 
 <h2 id="connections"><span class="section-number">05</span>Beyond guidance</h2>
 

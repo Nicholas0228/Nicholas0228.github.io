@@ -1,5 +1,12 @@
 # Newest updates first. Use year-only dates when the announcement month is unknown.
 # Historical announcements are preserved from the site's Git history.
+- date: "2026-10-22"
+  label: "Oct 2026"
+  new: true
+  text: >-
+    New blog: <a href="/blog/2026/10/guidance-in-looped-models/">Guidance is becoming
+    a cheat code for LLMs</a>, with Yifei Wang and Steven Wu.
+
 - date: "2026-09"
   label: "Sep 2026"
   new: true
