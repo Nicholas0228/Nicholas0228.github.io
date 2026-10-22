@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fcfbf8">
   {% include seo.html %}
+  {% for author in page.authors %}<meta name="author" content="{{ author.name | escape }}">{% endfor %}
   <link rel="icon" href="{{ '/images/favicon.ico' | relative_url }}">
   <link rel="alternate" type="application/atom+xml" href="{{ '/feed.xml' | relative_url }}" title="{{ site.title }}">
   <link rel="stylesheet" href="{{ '/blog/guidance-in-looped-models/style.css' | relative_url }}">
@@ -31,6 +32,7 @@
       <header class="article-header">
         <p class="eyebrow">Notes on generative models</p>
         <h1>{{ page.title }}</h1>
+        {% if page.authors %}<p class="article-authors">{% for author in page.authors %}<a href="{{ author.url | escape }}" rel="author">{{ author.name }}</a>{% unless forloop.last %}<span aria-hidden="true"> &amp; </span>{% endunless %}{% endfor %}</p>{% endif %}
         <p class="article-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%B %-d, %Y' }}</time><span aria-hidden="true">&middot;</span>{{ page.reading_time | default: '14' }} minute read</p>
       </header>
       {{ content }}

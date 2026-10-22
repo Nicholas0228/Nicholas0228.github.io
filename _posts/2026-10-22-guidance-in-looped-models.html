@@ -5,6 +5,11 @@ date: 2026-10-22
 permalink: /blog/2026/10/guidance-in-looped-models/
 blog: true
 reading_time: 15
+authors:
+  - name: Xiaoyu Wu
+    url: https://nicholas0228.github.io/
+  - name: Yifei Wang
+    url: https://a-little-hoof.github.io/
 excerpt: "Guidance keeps appearing in generative models. Loops offer a useful reference predictor—and a way to revisit the gap between guiding a token and guiding a whole answer."
 tags:
   - guidance
@@ -12,11 +17,9 @@ tags:
   - generative modeling
 ---
 
-<p class="opening">Guidance has become a standard ingredient of image generation with diffusion models<sup class="citation" id="cite-predictor-corrector-1"><a href="#ref-predictor-corrector" role="doc-noteref" aria-label="Reference 1: Arwen Bradley and Preetum Nakkiran, Classifier-Free Guidance is a Predictor-Corrector">1</a></sup>. It lets us strengthen the influence of a prompt during sampling, often improving fidelity at the cost of diversity. This is an appealing kind of control: a trained model can produce quite different results simply by changing how we use its predictions.</p>
+<p class="opening">Guidance is now part of the standard recipe for image and video generation. It can improve prompt following and sample quality by changing how a trained model is sampled, often at the cost of diversity.<sup class="citation" id="cite-cfg-1"><a href="#ref-cfg" role="doc-noteref" aria-label="Reference 1: Jonathan Ho and Tim Salimans, Classifier-Free Diffusion Guidance">1</a></sup> Stable Diffusion 3<sup class="citation" id="cite-sd3-1"><a href="#ref-sd3" role="doc-noteref" aria-label="Reference 2: Patrick Esser et al., Scaling Rectified Flow Transformers for High-Resolution Image Synthesis">2</a></sup> and Wan<sup class="citation" id="cite-wan-1"><a href="#ref-wan" role="doc-noteref" aria-label="Reference 3: Wan Team, Wan: Open and Advanced Large-Scale Video Generative Models">3</a></sup> use it, while FLUX.1 [dev]<sup class="citation" id="cite-flux-1"><a href="#ref-flux" role="doc-noteref" aria-label="Reference 4: Black Forest Labs, FLUX.1 [dev]">4</a></sup> distills it into the model.</p>
 
-<p>Classifier-free guidance<sup class="citation" id="cite-cfg-1"><a href="#ref-cfg" role="doc-noteref" aria-label="Reference 2: Jonathan Ho and Tim Salimans, Classifier-Free Diffusion Guidance">2</a></sup> makes this concrete. We compare the model's predictions with and without the condition, then amplify their difference. Related ideas keep appearing in language modeling: a strong model can be contrasted with a weaker one, or a prediction from the final layer with an earlier readout. Looped models supply another natural reference: an earlier pass through the same network.</p>
-
-<p>The resemblance invites a closer look. A diffusion model updates a whole noisy sample; an autoregressive LLM chooses one token given the preceding text. Guiding those individual choices need not produce the distribution we would get by guiding whole answers. Understanding that difference, and when loops might help, starts with a small piece of bookkeeping: the normalizing constant.</p>
+<p>In language models, there is a catch: <strong>guiding each token is not generally the same as guiding the whole answer.</strong> This post explores how loops can narrow that gap. When their readouts are sufficiently close, the normalization error starts at second order in the logit difference. We will work through why, then check how close looped-model readouts are in practice.</p>
 
 <nav class="contents" aria-label="In this article">
   <a href="#diffusion">Diffusion</a><a href="#sequences">Joint vs. sequential</a><a href="#loops">Loooooop</a><a href="#cancellation">The cancellation</a><a href="#measurements">The measurements</a><a href="#connections">Broader connections</a>
@@ -44,7 +47,7 @@ tags:
   \tag{2}
 \]</div>
 
-<p>This is the score combination behind classifier-free guidance<sup class="citation" id="cite-cfg-2"><a href="#ref-cfg" role="doc-noteref" aria-label="Reference 2: Jonathan Ho and Tim Salimans, Classifier-Free Diffusion Guidance">2</a></sup>. The normalizer depends on the condition and noise level, but not on the sample coordinates \(x_t\). Its gradient is zero. We can therefore evaluate the tilted score without evaluating the integral defining \(Z_{t,w}\).</p>
+<p>This is the score combination behind classifier-free guidance<sup class="citation" id="cite-cfg-2"><a href="#ref-cfg" role="doc-noteref" aria-label="Reference 1: Jonathan Ho and Tim Salimans, Classifier-Free Diffusion Guidance">1</a></sup>. The normalizer depends on the condition and noise level, but not on the sample coordinates \(x_t\). Its gradient is zero. We can therefore evaluate the tilted score without evaluating the integral defining \(Z_{t,w}\).</p>
 
 <details class="proof" id="proof-diffusion">
   <summary>Show the density-to-score derivation</summary>
@@ -63,17 +66,17 @@ tags:
   </div>
 </details>
 
-<p class="aside">There is a subtlety here: an exact tilted score at each noise level does not by itself imply that the complete diffusion sampler produces the clean-data tilt in Equation (1). Sander Dieleman added this qualification in the May 29 correction to his guidance post<sup class="citation" id="cite-sander-1"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 3: Sander Dieleman, Guidance: a cheat code for diffusion models">3</a></sup>; later analyses by Bradley and Nakkiran<sup class="citation" id="cite-predictor-corrector-2"><a href="#ref-predictor-corrector" role="doc-noteref" aria-label="Reference 1: Arwen Bradley and Preetum Nakkiran, Classifier-Free Guidance is a Predictor-Corrector">1</a></sup> and Chidambaram et al.<sup class="citation" id="cite-fine-grained-1"><a href="#ref-fine-grained" role="doc-noteref" aria-label="Reference 4: Muthu Chidambaram et al., What does guidance do? A fine-grained analysis in a simple setting">4</a></sup> make the distinction precise. What we use here is the score identity at a fixed noise level.</p>
+<p class="aside">There is a subtlety here: an exact tilted score at each noise level does not by itself imply that the complete diffusion sampler produces the clean-data tilt in Equation (1). Sander Dieleman added this qualification in the May 29 correction to his guidance post<sup class="citation" id="cite-sander-1"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup>; later analyses by Bradley and Nakkiran<sup class="citation" id="cite-predictor-corrector-1"><a href="#ref-predictor-corrector" role="doc-noteref" aria-label="Reference 6: Arwen Bradley and Preetum Nakkiran, Classifier-Free Guidance is a Predictor-Corrector">6</a></sup> and Chidambaram et al.<sup class="citation" id="cite-fine-grained-1"><a href="#ref-fine-grained" role="doc-noteref" aria-label="Reference 7: Muthu Chidambaram et al., What does guidance do? A fine-grained analysis in a simple setting">7</a></sup> make the distinction precise. What we use here is the score identity at a fixed noise level.</p>
 
 <h2 id="sequences"><span class="section-number">02</span>Tokens make that normalizer matter</h2>
 
-<p>We can perform a very similar subtraction with an LLM's next-token logits. Contrastive decoding<sup class="citation" id="cite-contrastive-decoding-1"><a href="#ref-contrastive-decoding" role="doc-noteref" aria-label="Reference 5: Xiang Lisa Li et al., Contrastive Decoding: Open-ended Text Generation as Optimization">5</a></sup> uses an expert and an amateur model; DoLa<sup class="citation" id="cite-dola-1"><a href="#ref-dola" role="doc-noteref" aria-label="Reference 6: Yung-Sung Chuang et al., DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models">6</a></sup> reads predictions from different layers. The reference and decoding constraints vary, but the idea of contrasting predictions already has a history in language modeling.</p>
+<p>We can perform a very similar subtraction with an LLM's next-token logits. Contrastive decoding<sup class="citation" id="cite-contrastive-decoding-1"><a href="#ref-contrastive-decoding" role="doc-noteref" aria-label="Reference 8: Xiang Lisa Li et al., Contrastive Decoding: Open-ended Text Generation as Optimization">8</a></sup> uses an expert and an amateur model; DoLa<sup class="citation" id="cite-dola-1"><a href="#ref-dola" role="doc-noteref" aria-label="Reference 9: Yung-Sung Chuang et al., DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models">9</a></sup> reads predictions from different layers. The reference and decoding constraints vary, but the idea of contrasting predictions already has a history in language modeling.</p>
 
 <p>The complication is that a next-token distribution is conditional on what has already been generated. In his 2022 post, Sander put his intuition this way:</p>
 
 <blockquote>
   <p>“my hunch is that diffusion guidance works so well precisely because we are able to apply it to the joint distribution”</p>
-  <footer>Sander Dieleman, Guidance: a cheat code for diffusion models<sup class="citation" id="cite-sander-2"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 3: Sander Dieleman, Guidance: a cheat code for diffusion models">3</a></sup> (2022)</footer>
+  <footer>Sander Dieleman, Guidance: a cheat code for diffusion models<sup class="citation" id="cite-sander-2"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup> (2022)</footer>
 </blockquote>
 
 <p>His contrast was with modifying sequential conditionals individually. We can make that distinction explicit with two predictors: a stronger one \(p_K\) and a reference \(p_E\). Both see the same prefix \(s\). Suppress the fixed prompt in the notation, assume positive token probabilities, and define</p>
@@ -136,38 +139,18 @@ tags:
 
 <figure class="toy" id="guidance-toy">
   <h3>Guide one token, or the whole answer?</h3>
-  <p class="toy-description">Both predictors start with the same 50–50 choice between A and B. They disagree only about what comes <em>after</em> B.</p>
-  <p class="toy-question">How often does the answer start with B?</p>
-  <div class="toy-comparison">
-    <div class="toy-method toy-local" role="group" aria-label="Local guidance: one token at a time">
-      <h4>Local guidance</h4>
-      <p class="toy-method-subtitle">One token at a time</p>
-      <output class="toy-big-value">50.0%</output>
-      <div class="bar" aria-hidden="true"><span style="width:50%"></span></div>
-      <div class="toy-scale" aria-hidden="true"><span>0%</span><span>100%</span></div>
-      <p class="toy-method-note">The predictors agree on the first token, so it stays a 50–50 choice.</p>
-    </div>
-    <div class="toy-method toy-joint" role="group" aria-label="Joint guidance: the whole answer">
-      <h4>Joint guidance</h4>
-      <p class="toy-method-subtitle">The whole answer</p>
-      <output class="toy-big-value" id="joint-b-value">62.1%</output>
-      <div class="bar" aria-hidden="true"><span id="joint-b-bar" style="width:62.1212%"></span></div>
-      <div class="toy-scale" aria-hidden="true"><span>0%</span><span>100%</span></div>
-      <p class="toy-method-note">The first choice also accounts for the guided weight of future tokens.</p>
-    </div>
-  </div>
-  <div class="toy-takeaway" aria-live="polite" aria-atomic="true">
-    <p><strong><span id="toy-gap-value">12.1</span> <span id="toy-gap-label">percentage-point difference</span></strong></p>
-    <p id="toy-gap-explanation">Guiding whole answers shifts probability toward B, before the second token is chosen.</p>
-  </div>
-  <p class="toy-control-hint">Try increasing guidance, or shrinking the difference between the predictors.</p>
+  <p class="toy-description">If the two guidance rules were equivalent, they would give <strong>the same probability of starting with B</strong>. Shrink the predictor difference to see the gap close.</p>
   <div class="toy-controls">
     <div><label for="toy-strength">Guidance strength w <output id="strength-value" for="toy-strength">1.00</output></label><input id="toy-strength" type="range" min="0" max="3" step="0.05" value="1"></div>
     <div><label for="toy-difference">Probability difference after B <output id="difference-value" for="toy-difference">0.40</output></label><input id="toy-difference" type="range" min="0" max="0.4" step="0.01" value="0.4"></div>
   </div>
-  <p class="toy-description toy-prefix-values">After B, the stronger predictor uses (<span id="strong-b1">0.90</span>, <span id="strong-b2">0.10</span>); the reference uses (0.50, 0.50).</p>
+  <p class="toy-question">Probability of starting with B</p>
+  <div class="probability"><strong>Local guidance</strong><div class="bar" aria-hidden="true"><span style="width:50%"></span></div><output>50.0%</output></div>
+  <div class="probability toy-joint"><strong>Joint guidance</strong><div class="bar" aria-hidden="true"><span id="joint-b-bar" style="width:62.1212%"></span></div><output id="joint-b-value">62.1%</output></div>
+  <p class="toy-takeaway" aria-live="polite" aria-atomic="true"><strong><span id="toy-gap-value">12.1</span> <span id="toy-gap-label">percentage-point gap.</span></strong> <span id="toy-gap-explanation">Even the first-token probabilities differ.</span></p>
   <details class="toy-details">
-    <summary>Why do they differ? See the normalizers and all four answers</summary>
+    <summary>Show the probabilities and normalizers</summary>
+    <p>Both predictors start with a 50–50 choice of A or B. After B, the stronger predictor uses (<span id="strong-b1">0.90</span>, <span id="strong-b2">0.10</span>); the reference uses (0.50, 0.50).</p>
     <p>The normalizers measure the total guided weight of the next-token options. Local guidance divides by each prefix's normalizer separately. Joint guidance retains their relative weights when comparing complete answers, so a larger normalizer after B makes B more likely from the start.</p>
     <div class="toy-stats"><span>Normalizer after A: <strong>1</strong></span><span>Normalizer after B: <output id="cb-value">1.640</output></span></div>
     <p class="toy-normalizer-rule">Here, the joint probability of starting with B is \(C(B)/(1+C(B))\).</p>
@@ -179,21 +162,26 @@ tags:
     </tbody></table></div>
     <p><strong>Sequence total variation: <output id="tv-value">12.12%</output>.</strong> This measures the difference across all four answers: half the sum of their absolute probability differences. It is zero when the distributions agree.</p>
   </details>
-  <figcaption>Exact probabilities from a four-answer toy model, not LLM evaluation scores. Setting either slider to zero makes local and joint guidance agree.</figcaption>
+  <figcaption>An exact four-answer toy model. Setting either slider to zero makes the two distributions agree.</figcaption>
   <noscript><p class="table-note">The table shows w = 1 and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
 </figure>
 
 <h2 id="loops"><span class="section-number">03</span>Loooooop</h2>
 
-<p>A looped Transformer spends more computation before emitting the next token by repeatedly applying a shared block. For the same prefix, we can read out a prediction after an early loop and another after the final loop. The network supplies its own reference.</p>
+<p>A looped Transformer reuses <strong>the same block of layers</strong> several times before predicting the next token. Huginn has three parts: <em>prelude</em> layers process the prefix once, a recurrent core repeatedly refines a hidden state, and <em>coda</em> layers read out the result.<sup class="citation" id="cite-huginn-1"><a href="#ref-huginn" role="doc-noteref" aria-label="Reference 10: Jonas Geiping et al., Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach">10</a></sup> Ouro instead repeats its full decoder stack.<sup class="citation" id="cite-ouro-1"><a href="#ref-ouro" role="doc-noteref" aria-label="Reference 11: Rui-Jie Zhu et al., Scaling Latent Reasoning via Looped Language Models">11</a></sup></p>
 
-<div class="trajectory" role="img" aria-label="An early recurrent state h E is refined through the same shared block into a later state h K; guidance extrapolates from their logit readouts.">
-  <div class="state">\(h_E\)<small>Early readout \(z_E\)</small></div><span class="arrow" aria-hidden="true">&rarr;</span>
-  <div class="state">\(f,\,f,\,\ldots\)<small>More loops, same block</small></div><span class="arrow" aria-hidden="true">&rarr;</span>
-  <div class="state">\(h_K\)<small>Final readout \(z_K\)</small></div>
+<p>For a fixed prefix, write one application of the shared block as \(f\); any fixed input from the prelude is implicit. The recurrence looks like this:</p>
+
+<div class="trajectory" role="img" aria-label="The shared block f maps an early hidden state h E to f of h E, then f of f of h E, and continues to h K. The same output layers read out the early and final states.">
+  <div class="state">\(h_E\)<small>Early state</small></div><span class="arrow" aria-hidden="true">&rarr;</span>
+  <div class="state">\(f(h_E)\)<small>One more loop</small></div><span class="arrow" aria-hidden="true">&rarr;</span>
+  <div class="state">\(f(f(h_E))\)<small>Same block again</small></div><span class="arrow" aria-hidden="true">&ctdot; &rarr;</span>
+  <div class="state">\(h_K\)<small>Final state</small></div>
 </div>
 
-<p>LoopCD<sup class="citation" id="cite-loopcd-1"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 7: Weihao Liu et al., Decoding Looped Transformers Better for (Almost) Free">7</a></sup> uses these recurrent readouts for contrastive decoding. Its logit variant extrapolates from the early prediction toward the later one:</p>
+<p>Apply the same output layers to \(h_E\) and \(h_K\), including the coda where present, and we get early and final logits \(z_E\) and \(z_K\). <strong>The network supplies its own reference.</strong></p>
+
+<p>LoopCD<sup class="citation" id="cite-loopcd-1"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 12: Weihao Liu et al., Decoding Looped Transformers Better for (Almost) Free">12</a></sup> uses these recurrent readouts for contrastive decoding without additional training. Its logit variant extrapolates from the early prediction toward the later one:</p>
 
 <div class="equation">\[
   z_{\rm guided}=z_K+w(z_K-z_E),\qquad
@@ -202,6 +190,8 @@ tags:
 \]</div>
 
 <p>The paper's standard logit reference is the first loop, so the two readouts need not come from adjacent iterations. It also studies hidden-state guidance; our probability argument below concerns the logit variant. Passing a hidden-state combination through nonlinear output layers need not give Equation (5).</p>
+
+<p>The reported gains can be substantial. At matched recurrent depth, adaptive LoopCD-Logits raises Ouro-2.6B-Thinking's AIME 2024 pass@1 from <strong>61.88% to 73.33%</strong>; LoopCD-Hidden raises Huginn's HumanEval pass@1 from <strong>22.56% to 31.71%</strong> at 32 loops (Tables 1 and 3).<sup class="citation" id="cite-loopcd-2"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 12: Weihao Liu et al., Decoding Looped Transformers Better for (Almost) Free">12</a></sup> In a separate seven-benchmark multiple-choice comparison, half-depth guidance matches or exceeds the full-depth mean with <strong>22.5–48.2% fewer theoretical forward FLOPs</strong> (Table A9). Gains depend on the setting: fixed logit guidance lowers Huginn's GSM8K accuracy from 42.91% to 41.62% (Table A5).</p>
 
 <p>Why might this be useful beyond making the reference convenient? Reusing the block and readout makes it plausible that early and late predictions remain compatible. That suggests an empirical question: <em>are their logits actually closer than predictions read from different layers of an ordinary LLM?</em> If so, we have a reason to examine the small-difference limit of the normalization problem.</p>
 
@@ -328,8 +318,7 @@ tags:
 
 <figure class="wide">
   <img src="{{ '/blog/guidance-in-looped-models/logit-gaps.svg' | relative_url }}" width="1440" height="660" loading="lazy" alt="Two plots with linear vertical axes starting at zero compare intermediate-to-final logit gaps by readout depth. At 25%, 50%, and 75% of full depth, Huginn and Ouro have substantially smaller centered RMS gaps than Qwen and Pythia. The ordering also holds after dividing by final-logit RMS.">
-  <figcaption><strong>Measured readout differences, on identical text prefixes.</strong> Left: centered logit RMS. Right: the same gap divided by the final readout's centered RMS at each position, then averaged. Both vertical axes are linear and start at zero. Readout depth indicates how far through the model a prediction is read: 50% means halfway through its loops or layers. Bands show 95% question-bootstrap intervals; the final-depth zero is omitted because it is true by definition. Lines connect measured depths.</figcaption>
-  <div class="figure-links"><a href="{{ '/blog/guidance-in-looped-models/logit-gaps.pdf' | relative_url }}">Figure PDF</a><a href="{{ '/blog/guidance-in-looped-models/blog_primary_table.csv' | relative_url }}">Data CSV</a><a href="https://github.com/Nicholas0228/loop-distil/tree/a92255d1626e59ba17cdcaae40494040c42b4aed/reports/depth_logit_comparison_20261021">Full experiment and audits</a></div>
+  <figcaption><strong>Intermediate-to-final logit gaps.</strong> Left: centered RMS; right: normalized by final-logit RMS. Shading: 95% bootstrap intervals.</figcaption>
 </figure>
 
 <p><strong>The looped models' mean gaps are 2.8–14.1 times smaller</strong> across the twelve loop-versus-layer comparisons at 25%, 50%, and 75% readout depth. Every paired 95% bootstrap interval for the ratio lies below one. At half depth, for example, Huginn's gap is 0.268 times Pythia's, with interval [0.261, 0.276]; Ouro's is 0.203 times Pythia's, with interval [0.199, 0.209]. The ordering survives both the scale normalization in the right panel and a check using only the question prefixes, before any answer text.</p>
@@ -340,6 +329,7 @@ tags:
     <p>The models are frozen base checkpoints. Inputs use a common plain-text, eight-shot Q/A format. Answer-prefix positions come from cached Huginn-32 continuations, with no filtering for answer correctness. We selected shared character boundaries that round-trip exactly through all four tokenizers, including the prompt boundary. This matches text, not token IDs across different vocabularies.</p>
     <p>Intermediate states use each architecture's native final normalization and output head, including Huginn's coda. We did not fit a tuned lens. Native forwards use BF16; full-vocabulary statistics use float64 at temperature one. A native-forward check and a future-token control passed at all 84 audited model/depth settings. An independent audit recomputed 28,672 depth-position records.</p>
     <p>Intervals resample the 128 questions, retaining each question's eight positions together; paired comparisons resample the same questions for both models. We used 5,000 bootstrap draws. These are individual intervals over the sampled questions, not simultaneous intervals or estimates of variation across training seeds.</p>
+    <p>The normalized gap divides by the final readout's centered RMS at each position before averaging. Both plot axes start at zero. Lines connect the measured depths; the final-depth zero is omitted because it is true by definition.</p>
     <p>Depth fractions are a comparison convention, not equal FLOPs or equal predictor competence. The models differ in architecture, training, vocabulary, and size. Their gaps support a statement about these checkpoints and readout procedures; they do not isolate weight sharing as the cause. Ordinary layers may also benefit from a trained intermediate readout.</p>
     <p>LoopCD's first-loop reference deserves separate care: it is 1/32 of the deployed depth for Huginn but 1/4 for Ouro. We therefore do not present “first versus final” as a matched-depth comparison. The source report includes that diagnostic separately.</p>
   </div>
@@ -355,28 +345,33 @@ tags:
   </div>
 </details>
 
-<h2 id="connections"><span class="section-number">05</span>A reference from less computation</h2>
+<h2 id="connections"><span class="section-number">05</span>Beyond guidance</h2>
 
-<p>There is a useful connection here to autoguidance in diffusion. Karras et al.<sup class="citation" id="cite-autoguidance-1"><a href="#ref-autoguidance" role="doc-noteref" aria-label="Reference 8: Tero Karras et al., Guiding a Diffusion Model with a Bad Version of Itself">8</a></sup> guide a model using a smaller, less-trained version of itself. The reference does not have to represent the absence of a condition; it can represent a less capable way of making the same prediction. Looped models suggest a particularly economical version of that idea: obtain the reference by stopping the same computation earlier.</p>
+<p>Guidance is one of several ideas that can travel between diffusion and looped models. In <em>autoguidance</em>, Karras et al. guide a diffusion model with a smaller, less-trained version of itself.<sup class="citation" id="cite-autoguidance-1"><a href="#ref-autoguidance" role="doc-noteref" aria-label="Reference 13: Tero Karras et al., Guiding a Diffusion Model with a Bad Version of Itself">13</a></sup> The useful reference is a weaker prediction of the same thing. Loops offer an economical way to obtain one: stop the same computation earlier.</p>
 
-<p>Both settings contrast related predictions, but their iterations play different roles. A diffusion step updates a noisy sample at a specified noise level. A loop updates a hidden state while the token prefix stays fixed. Reusing a block does not make its update a score, and it does not give an autoregressive model the ability to revise an entire answer at once. The connection we can establish is through the predictions and their normalizers.</p>
+<p>Another connection is to give each loop a sense of where it is along a computation. LoopFormer conditions its shared block on an internal time \(t\) and step size \(\Delta t\), borrowing from diffusion timestep conditioning and shortcut models. It trains shorter trajectories to match the predictions of longer ones, allowing the same model to run at different compute budgets.<sup class="citation" id="cite-loopformer-1"><a href="#ref-loopformer" role="doc-noteref" aria-label="Reference 14: Ahmadreza Jeddi, Marco Ciccone, and Babak Taati, LoopFormer: Elastic-Depth Looped Transformers for Latent Reasoning via Shortcut Modulation">14</a></sup></p>
 
-<p>One further observation helps sharpen the question. In Equation (3), local and joint guidance agree exactly whenever the accumulated log-normalizer is constant across answers. It need not be zero. Small logit differences give us a sufficient way to control that variation, but they are not the only possible way. A direct next experiment would measure how much \(\sum_t\log C(y_{&lt;t})\) varies across sampled completions, alongside guidance quality and answer length. That would test the quantity that actually separates the two sequence distributions.</p>
+<p><em>Thinking with Looped Flows</em> brings flow modeling into recurrent reasoning itself.<sup class="citation" id="cite-looped-flows-1"><a href="#ref-looped-flows" role="doc-noteref" aria-label="Reference 15: Ayhan Suleymanzade, Chanhyuk Lee, Floor Eijkelboom, Nicholas M. Boffi, İsmail İlkan Ceylan, and Jinwoo Kim, Thinking with Looped Flows">15</a></sup> It trains a recurrent denoiser on progressively less noisy versions of a solution. At inference, a flow turns noise into a solution while the recurrent state carries information between steps. A finer time grid provides more computation; different initial noise samples can produce different valid solutions.</p>
 
-<p>The attraction of loops is that they offer a useful reference almost as a by-product of inference. LoopCD reports downstream gains<sup class="citation" id="cite-loopcd-2"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 7: Weihao Liu et al., Decoding Looped Transformers Better for (Almost) Free">7</a></sup> from exploiting this contrast. The measurements here ask a different question: whether the readouts have the closeness that motivates the normalization argument. On these four checkpoints, they do in a comparative sense; the absolute approximation still needs more work.</p>
-
-<p>This brings us back to the question about guiding a whole answer. Under a uniform small-logit-difference assumption, we can approximate the joint tilt with sequential guidance: the change in token log-odds is first order, while the normalization mismatch begins at second order. Loops give us a practical place to look for that regime. I find that a promising connection between guidance in diffusion and language models—and a more precise question to test than whether subtracting two predictions happens to improve a benchmark.</p>
+<p>These approaches share a practical question: <strong>how should predictions improve as we spend more computation?</strong> Here, we used intermediate predictions to understand guidance. Time conditioning, shortcut training, and denoising also let us shape how those predictions are produced. Guidance may be an early example of a much wider exchange between diffusion and recurrent reasoning.</p>
 
 <h3 id="references">References</h3>
 <ol class="references">
-  <li id="ref-predictor-corrector">Arwen Bradley and Preetum Nakkiran. <a href="https://arxiv.org/abs/2408.09000"><cite>Classifier-Free Guidance is a Predictor-Corrector</cite></a>. arXiv, 2024. <a class="citation-back" href="#cite-predictor-corrector-1" role="doc-backlink" aria-label="Back to citation 1 of reference 1">↩1</a> <a class="citation-back" href="#cite-predictor-corrector-2" role="doc-backlink" aria-label="Back to citation 2 of reference 1">↩2</a></li>
-  <li id="ref-cfg">Jonathan Ho and Tim Salimans. <a href="https://arxiv.org/abs/2207.12598"><cite>Classifier-Free Diffusion Guidance</cite></a>. arXiv, 2022. <a class="citation-back" href="#cite-cfg-1" role="doc-backlink" aria-label="Back to citation 1 of reference 2">↩1</a> <a class="citation-back" href="#cite-cfg-2" role="doc-backlink" aria-label="Back to citation 2 of reference 2">↩2</a></li>
-  <li id="ref-sander">Sander Dieleman. <a href="https://sander.ai/2022/05/26/guidance.html"><cite>Guidance: a cheat code for diffusion models</cite></a>. May 26, 2022; including the May 29 correction. <a class="citation-back" href="#cite-sander-1" role="doc-backlink" aria-label="Back to citation 1 of reference 3">↩1</a> <a class="citation-back" href="#cite-sander-2" role="doc-backlink" aria-label="Back to citation 2 of reference 3">↩2</a></li>
-  <li id="ref-fine-grained">Muthu Chidambaram et al. <a href="https://arxiv.org/abs/2409.13074"><cite>What does guidance do? A fine-grained analysis in a simple setting</cite></a>. arXiv, 2024. <a class="citation-back" href="#cite-fine-grained-1" role="doc-backlink" aria-label="Back to citation 1 of reference 4">↩</a></li>
-  <li id="ref-contrastive-decoding">Xiang Lisa Li et al. <a href="https://arxiv.org/abs/2210.15097"><cite>Contrastive Decoding: Open-ended Text Generation as Optimization</cite></a>. arXiv, 2022. <a class="citation-back" href="#cite-contrastive-decoding-1" role="doc-backlink" aria-label="Back to citation 1 of reference 5">↩</a></li>
-  <li id="ref-dola">Yung-Sung Chuang et al. <a href="https://arxiv.org/abs/2309.03883"><cite>DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models</cite></a>. arXiv, 2023. <a class="citation-back" href="#cite-dola-1" role="doc-backlink" aria-label="Back to citation 1 of reference 6">↩</a></li>
-  <li id="ref-loopcd">Weihao Liu et al. <a href="https://arxiv.org/html/2610.02185v1"><cite>Decoding Looped Transformers Better for (Almost) Free</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-loopcd-1" role="doc-backlink" aria-label="Back to citation 1 of reference 7">↩1</a> <a class="citation-back" href="#cite-loopcd-2" role="doc-backlink" aria-label="Back to citation 2 of reference 7">↩2</a></li>
-  <li id="ref-autoguidance">Tero Karras et al. <a href="https://arxiv.org/abs/2406.02507"><cite>Guiding a Diffusion Model with a Bad Version of Itself</cite></a>. NeurIPS, 2024. <a class="citation-back" href="#cite-autoguidance-1" role="doc-backlink" aria-label="Back to citation 1 of reference 8">↩</a></li>
+  <li id="ref-cfg">Jonathan Ho and Tim Salimans. <a href="https://arxiv.org/abs/2207.12598"><cite>Classifier-Free Diffusion Guidance</cite></a>. arXiv, 2022. <a class="citation-back" href="#cite-cfg-1" role="doc-backlink" aria-label="Back to citation 1 of reference 1">↩1</a> <a class="citation-back" href="#cite-cfg-2" role="doc-backlink" aria-label="Back to citation 2 of reference 1">↩2</a></li>
+  <li id="ref-sd3">Patrick Esser et al. <a href="https://arxiv.org/abs/2403.03206"><cite>Scaling Rectified Flow Transformers for High-Resolution Image Synthesis</cite></a>. ICML, 2024. <a class="citation-back" href="#cite-sd3-1" role="doc-backlink" aria-label="Back to citation 1 of reference 2">↩</a></li>
+  <li id="ref-wan">Wan Team. <a href="https://arxiv.org/abs/2503.20314"><cite>Wan: Open and Advanced Large-Scale Video Generative Models</cite></a>. arXiv, 2025. <a class="citation-back" href="#cite-wan-1" role="doc-backlink" aria-label="Back to citation 1 of reference 3">↩</a></li>
+  <li id="ref-flux">Black Forest Labs. <a href="https://huggingface.co/black-forest-labs/FLUX.1-dev"><cite>FLUX.1 [dev]</cite></a>. Model card, 2024. <a class="citation-back" href="#cite-flux-1" role="doc-backlink" aria-label="Back to citation 1 of reference 4">↩</a></li>
+  <li id="ref-sander">Sander Dieleman. <a href="https://sander.ai/2022/05/26/guidance.html"><cite>Guidance: a cheat code for diffusion models</cite></a>. May 26, 2022; including the May 29 correction. <a class="citation-back" href="#cite-sander-1" role="doc-backlink" aria-label="Back to citation 1 of reference 5">↩1</a> <a class="citation-back" href="#cite-sander-2" role="doc-backlink" aria-label="Back to citation 2 of reference 5">↩2</a></li>
+  <li id="ref-predictor-corrector">Arwen Bradley and Preetum Nakkiran. <a href="https://arxiv.org/abs/2408.09000"><cite>Classifier-Free Guidance is a Predictor-Corrector</cite></a>. arXiv, 2024. <a class="citation-back" href="#cite-predictor-corrector-1" role="doc-backlink" aria-label="Back to citation 1 of reference 6">↩</a></li>
+  <li id="ref-fine-grained">Muthu Chidambaram et al. <a href="https://arxiv.org/abs/2409.13074"><cite>What does guidance do? A fine-grained analysis in a simple setting</cite></a>. arXiv, 2024. <a class="citation-back" href="#cite-fine-grained-1" role="doc-backlink" aria-label="Back to citation 1 of reference 7">↩</a></li>
+  <li id="ref-contrastive-decoding">Xiang Lisa Li et al. <a href="https://arxiv.org/abs/2210.15097"><cite>Contrastive Decoding: Open-ended Text Generation as Optimization</cite></a>. arXiv, 2022. <a class="citation-back" href="#cite-contrastive-decoding-1" role="doc-backlink" aria-label="Back to citation 1 of reference 8">↩</a></li>
+  <li id="ref-dola">Yung-Sung Chuang et al. <a href="https://arxiv.org/abs/2309.03883"><cite>DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models</cite></a>. arXiv, 2023. <a class="citation-back" href="#cite-dola-1" role="doc-backlink" aria-label="Back to citation 1 of reference 9">↩</a></li>
+  <li id="ref-huginn">Jonas Geiping et al. <a href="https://arxiv.org/html/2502.05171v2"><cite>Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach</cite></a>. arXiv, 2025. <a class="citation-back" href="#cite-huginn-1" role="doc-backlink" aria-label="Back to citation 1 of reference 10">↩</a></li>
+  <li id="ref-ouro">Rui-Jie Zhu et al. <a href="https://arxiv.org/abs/2510.25741"><cite>Scaling Latent Reasoning via Looped Language Models</cite></a>. arXiv, 2025. <a class="citation-back" href="#cite-ouro-1" role="doc-backlink" aria-label="Back to citation 1 of reference 11">↩</a></li>
+  <li id="ref-loopcd">Weihao Liu et al. <a href="https://arxiv.org/html/2610.02185v1"><cite>Decoding Looped Transformers Better for (Almost) Free</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-loopcd-1" role="doc-backlink" aria-label="Back to citation 1 of reference 12">↩1</a> <a class="citation-back" href="#cite-loopcd-2" role="doc-backlink" aria-label="Back to citation 2 of reference 12">↩2</a></li>
+  <li id="ref-autoguidance">Tero Karras et al. <a href="https://arxiv.org/abs/2406.02507"><cite>Guiding a Diffusion Model with a Bad Version of Itself</cite></a>. NeurIPS, 2024. <a class="citation-back" href="#cite-autoguidance-1" role="doc-backlink" aria-label="Back to citation 1 of reference 13">↩</a></li>
+  <li id="ref-loopformer">Ahmadreza Jeddi, Marco Ciccone, and Babak Taati. <a href="https://arxiv.org/abs/2602.11451"><cite>LoopFormer: Elastic-Depth Looped Transformers for Latent Reasoning via Shortcut Modulation</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-loopformer-1" role="doc-backlink" aria-label="Back to citation 1 of reference 14">↩</a></li>
+  <li id="ref-looped-flows">Ayhan Suleymanzade, Chanhyuk Lee, Floor Eijkelboom, Nicholas M. Boffi, İsmail İlkan Ceylan, and Jinwoo Kim. <a href="https://arxiv.org/abs/2609.11801"><cite>Thinking with Looped Flows</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-looped-flows-1" role="doc-backlink" aria-label="Back to citation 1 of reference 15">↩</a></li>
 </ol>
 
-<p class="endnote">Revised from my October 20 draft. The numerical section uses measurements completed on October 21, 2026; it adds no new training run or answer-accuracy claim. <a href="https://github.com/Nicholas0228/loop-distil/tree/a92255d1626e59ba17cdcaae40494040c42b4aed/reports/depth_logit_comparison_20261021">Frozen reports and audits</a> · <a href="{{ '/blog/guidance-in-looped-models/paired_rms_comparison.csv' | relative_url }}">Paired comparisons</a> · <a href="{{ '/blog/guidance-in-looped-models/provenance.json' | relative_url }}">Data provenance</a>. The interactive example is an exact calculation on a toy distribution.</p>
+<p class="endnote">Revised from the October 20 draft. The numerical section uses measurements completed on October 21, 2026; it adds no new training run or answer-accuracy claim. <a href="https://github.com/Nicholas0228/loop-distil/tree/a92255d1626e59ba17cdcaae40494040c42b4aed/reports/depth_logit_comparison_20261021">Frozen reports and audits</a> · <a href="{{ '/blog/guidance-in-looped-models/paired_rms_comparison.csv' | relative_url }}">Paired comparisons</a> · <a href="{{ '/blog/guidance-in-looped-models/provenance.json' | relative_url }}">Data provenance</a>. The interactive example is an exact calculation on a toy distribution.</p>

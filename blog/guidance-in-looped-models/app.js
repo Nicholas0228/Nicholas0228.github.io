@@ -35,10 +35,10 @@
     const agree = w === 0 || d === 0;
     const gap = 100 * (result.jointB - 0.5);
     document.getElementById('toy-gap-value').textContent = agree ? 'No' : (gap < 0.05 ? '<0.1' : gap.toFixed(1));
-    document.getElementById('toy-gap-label').textContent = agree ? 'difference: the two ways agree' : 'percentage-point difference';
+    document.getElementById('toy-gap-label').textContent = agree ? 'gap.' : 'percentage-point gap.';
     document.getElementById('toy-gap-explanation').textContent = agree
-      ? 'Both start with B half the time, and agree on all four complete answers.'
-      : 'Guiding whole answers shifts probability toward B, before the second token is chosen.';
+      ? 'The two distributions agree.'
+      : 'Even the first-token probabilities differ.';
     toy.classList.toggle('toy-agree', agree);
     document.getElementById('cb-value').textContent = result.cB.toFixed(3);
     document.getElementById('tv-value').textContent = (100 * result.tv).toFixed(2) + '%';
