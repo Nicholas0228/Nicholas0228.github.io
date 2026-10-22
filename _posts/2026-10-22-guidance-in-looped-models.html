@@ -202,11 +202,10 @@ tags:
     <tbody>
       <tr><th scope="row">Ouro-2.6B-Thinking<small>AIME 2024 · pass@1</small></th><td>Logits<small>Adaptive strength</small></td><td>61.88</td><td><strong>73.33</strong></td></tr>
       <tr><th scope="row">Huginn · 32 loops<small>HumanEval · pass@1</small></th><td>Hidden states</td><td>22.56</td><td><strong>31.71</strong></td></tr>
-      <tr><th scope="row">Huginn · 32 loops<small>GSM8K · accuracy</small></th><td>Logits<small>Fixed strength</small></td><td>42.91</td><td>41.62</td></tr>
     </tbody>
   </table>
 </div>
-<p class="table-note">Same recurrent depth within each row (Tables 1, 3, and A5). Gains vary by task and guidance variant.</p>
+<p class="table-note">Same recurrent depth within each row (Tables 1 and 3). Gains vary by task and guidance variant.</p>
 <p>In a separate seven-task comparison, guidance at half depth matches or exceeds the full-depth average with <strong>22.5–48.2% fewer theoretical forward FLOPs</strong> (Table A9).</p>
 
 <p>Why might this be useful beyond making the reference convenient? Reusing the block and readout makes it plausible that early and late predictions remain compatible. That suggests an empirical question: <em>are their logits actually closer than predictions read from different layers of an ordinary LLM?</em> If so, we have a reason to examine the small-difference limit of the normalization problem.</p>
