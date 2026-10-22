@@ -15,6 +15,33 @@ See more info at https://academicpages.github.io/
 
 ## Running locally
 
+### Guidance essay preview
+
+The guidance essay is on local branch `preview/guidance-loop-results`. Its draft
+route is `/blog/2026/10/guidance-in-looped-models/`; previewing it does not publish
+it to the homepage.
+
+- Article: `_posts/2026-10-22-guidance-in-looped-models.html`
+- Layout: `_layouts/essay.html`
+- Styles, interactive example, measured figures and source provenance:
+  `blog/guidance-in-looped-models/`
+
+Use the Jekyll preview command below, then open
+`http://127.0.0.1:4000/blog/2026/10/guidance-in-looped-models/`.
+Forward port 4000 if the checkout is on an SSH host.
+
+`python3 scripts/check_guidance_math.py` independently checks the finite-model
+normalization identities, lookahead factorization, bounds and Taylor scaling.
+With Matplotlib installed, `python3 scripts/plot_guidance_blog.py` regenerates the
+SVG, PNG and PDF figures from the audited aggregates in `plot-data.json`.
+These scripts do not launch model inference or training. The source commit and
+report hashes are recorded in `provenance.json` next to the figures.
+
+MathJax 3.2.2 is served locally, with its Apache 2.0 license in
+`blog/guidance-in-looped-models/mathjax/LICENSE`. The essay reuses the site's
+existing Newsreader fonts and their OFL license under
+`blog/compress-to-remember/assets/fonts/`.
+
 ### Blog and project index
 
 `/blog/` lists posts marked `blog: true` and every publication with a `projecturl`,

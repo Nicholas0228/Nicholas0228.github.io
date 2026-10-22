@@ -1,0 +1,22 @@
+{
+  "source_commit": "a92255d1626e59ba17cdcaae40494040c42b4aed",
+  "source_url": "https://github.com/Nicholas0228/loop-distil/tree/a92255d1626e59ba17cdcaae40494040c42b4aed/reports/depth_logit_comparison_20261021",
+  "measurement_date": "2026-10-21",
+  "source_sha256": {
+    "huginn_summary.json": "d650b275c8e9cb6e24555a858c07542d03a56a715693689b630995917c2b7446",
+    "ouro_summary.json": "21e2e5c7e08dbcb39d724efbff0c57c32306223ad0ba85173321544d7e22cf92",
+    "qwen_summary.json": "e3d44f15a9f28ef600395f2c7daf9bace3925dcfdc01dff4dfd3b4ba5274b2a4",
+    "pythia_summary.json": "f2b0b99d9fba6068fc05fb13ee91e1065ac3349dbd7c44bb305646a2cffbe402",
+    "blog_primary_table.csv": "0028fcde0a46d6dab496456ad1f104aa3dd779e310765fa88db70ae79e382d4f",
+    "paired_rms_comparison.csv": "c10e89b1d7b53c853692a02809cdbb6f78e1f676e0cd8a72310b7bc6b55fed9b",
+    "comparison.json": "1208f6725c90c1094554f188de98c859b0423cb4293533073473ffe679a97c1c",
+    "independent_audit.json": "50f1d10e9ea852d4a59742c8c9e480ffe7a41a51342fd6403bb65171aba6a495",
+    "checkpoint_attribution.json": "38da98b7b9fe3685e786f0a3bfad75290d206d5919dca77a5b7597af493ae9bd"
+  },
+  "original_draft": {
+    "filename": "Guidance has now become a cheatcode in LLM. - Xiaoyu (Nicholas) Wu.pdf",
+    "sha256": "210e48211ec4586bc59faace6ed42d840f820174953f04f2cf0225822676dea2"
+  },
+  "plot_data_sha256": "d4458a57b5a22e00e1d70dffbfcc091d2d860c6b5b9a51d85af8d27f724453dd",
+  "note": "Plot and tables are derived from frozen existing experiments. No new model runs were performed for this article."
+}

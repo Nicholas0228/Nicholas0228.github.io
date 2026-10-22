@@ -1,0 +1,543 @@
+{
+  "questions": 128,
+  "positions_per_question": 8,
+  "confidence_intervals": "Individual 95% question bootstrap, 5000 draws; positions clustered by question.",
+  "models": [
+    {
+      "key": "huginn",
+      "label": "Huginn-0125 (32 loops)",
+      "kind": "loop",
+      "final_depth": 32,
+      "depths": [
+        {
+          "depth": 1,
+          "fraction": 0.03125,
+          "centered_logit_rms": {
+            "mean": 1.5642697904529794,
+            "question_bootstrap_95ci": [
+              1.5524923498812733,
+              1.5761980209744682
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.7181321835194284,
+            "question_bootstrap_95ci": [
+              0.7102741753927959,
+              0.7261593865875722
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "fraction": 0.0625,
+          "centered_logit_rms": {
+            "mean": 1.3590051993206878,
+            "question_bootstrap_95ci": [
+              1.349868635731329,
+              1.3684721348719104
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.6232549497221027,
+            "question_bootstrap_95ci": [
+              0.6162876042800558,
+              0.6305877660727267
+            ]
+          }
+        },
+        {
+          "depth": 4,
+          "fraction": 0.125,
+          "centered_logit_rms": {
+            "mean": 1.089089908731386,
+            "question_bootstrap_95ci": [
+              1.0785713108969137,
+              1.0996329461539238
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.5018711978609959,
+            "question_bootstrap_95ci": [
+              0.4949892190876502,
+              0.5089346234549886
+            ]
+          }
+        },
+        {
+          "depth": 8,
+          "fraction": 0.25,
+          "centered_logit_rms": {
+            "mean": 0.797557289157734,
+            "question_bootstrap_95ci": [
+              0.7850374804623911,
+              0.8102651873030088
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.36648412069697656,
+            "question_bootstrap_95ci": [
+              0.3602117506282465,
+              0.3731442149023463
+            ]
+          }
+        },
+        {
+          "depth": 16,
+          "fraction": 0.5,
+          "centered_logit_rms": {
+            "mean": 0.7013762907354637,
+            "question_bootstrap_95ci": [
+              0.6823831409871675,
+              0.7217251970640126
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.320009078321846,
+            "question_bootstrap_95ci": [
+              0.3110378037093432,
+              0.3295654039144777
+            ]
+          }
+        },
+        {
+          "depth": 24,
+          "fraction": 0.75,
+          "centered_logit_rms": {
+            "mean": 0.2678157449595372,
+            "question_bootstrap_95ci": [
+              0.2522930710916662,
+              0.28476908460811845
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.12278237026304699,
+            "question_bootstrap_95ci": [
+              0.11534726480959397,
+              0.13081346254423307
+            ]
+          }
+        },
+        {
+          "depth": 31,
+          "fraction": 0.96875,
+          "centered_logit_rms": {
+            "mean": 0.05182966967862007,
+            "question_bootstrap_95ci": [
+              0.05008616650241023,
+              0.053682358980507425
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.023937642822477016,
+            "question_bootstrap_95ci": [
+              0.0230715012531544,
+              0.024869218969770075
+            ]
+          }
+        },
+        {
+          "depth": 32,
+          "fraction": 1.0,
+          "centered_logit_rms": {
+            "mean": 0.0,
+            "question_bootstrap_95ci": [
+              0.0,
+              0.0
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.0,
+            "question_bootstrap_95ci": [
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "key": "ouro",
+      "label": "Ouro-2.6B (4 loops)",
+      "kind": "loop",
+      "final_depth": 4,
+      "depths": [
+        {
+          "depth": 1,
+          "fraction": 0.25,
+          "centered_logit_rms": {
+            "mean": 1.1104991160904203,
+            "question_bootstrap_95ci": [
+              1.0901874283174626,
+              1.1311642747146675
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.38660702366384503,
+            "question_bootstrap_95ci": [
+              0.37992490830327,
+              0.393301117989819
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "fraction": 0.5,
+          "centered_logit_rms": {
+            "mean": 0.5325349292083414,
+            "question_bootstrap_95ci": [
+              0.5196578131842061,
+              0.5458242063915412
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.18763507670016322,
+            "question_bootstrap_95ci": [
+              0.18318528795555414,
+              0.19229098593134997
+            ]
+          }
+        },
+        {
+          "depth": 3,
+          "fraction": 0.75,
+          "centered_logit_rms": {
+            "mean": 0.28321006612831734,
+            "question_bootstrap_95ci": [
+              0.2743045910740119,
+              0.2925731238376781
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.10028524973777517,
+            "question_bootstrap_95ci": [
+              0.09705189157729925,
+              0.1037105123298204
+            ]
+          }
+        },
+        {
+          "depth": 4,
+          "fraction": 1.0,
+          "centered_logit_rms": {
+            "mean": 0.0,
+            "question_bootstrap_95ci": [
+              0.0,
+              0.0
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.0,
+            "question_bootstrap_95ci": [
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "key": "qwen",
+      "label": "Qwen2.5-3B (36 layers)",
+      "kind": "layer",
+      "final_depth": 36,
+      "depths": [
+        {
+          "depth": 1,
+          "fraction": 0.027777777777777776,
+          "centered_logit_rms": {
+            "mean": 4.370076485664184,
+            "question_bootstrap_95ci": [
+              4.355180710162357,
+              4.385546834473239
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.4972313271509963,
+            "question_bootstrap_95ci": [
+              1.4915060806480498,
+              1.5029673683253912
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "fraction": 0.05555555555555555,
+          "centered_logit_rms": {
+            "mean": 5.028078277639334,
+            "question_bootstrap_95ci": [
+              5.011367135943983,
+              5.044495544982176
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.7240159904657015,
+            "question_bootstrap_95ci": [
+              1.716513945528905,
+              1.7317925612673084
+            ]
+          }
+        },
+        {
+          "depth": 5,
+          "fraction": 0.1388888888888889,
+          "centered_logit_rms": {
+            "mean": 4.713799595614313,
+            "question_bootstrap_95ci": [
+              4.696370372233542,
+              4.7313554242391564
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.6149527210569672,
+            "question_bootstrap_95ci": [
+              1.6081580531866166,
+              1.6220422352494683
+            ]
+          }
+        },
+        {
+          "depth": 9,
+          "fraction": 0.25,
+          "centered_logit_rms": {
+            "mean": 4.310750599227925,
+            "question_bootstrap_95ci": [
+              4.293998514547674,
+              4.327780410673783
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.4762004653982848,
+            "question_bootstrap_95ci": [
+              1.4701535953682703,
+              1.4825537391599968
+            ]
+          }
+        },
+        {
+          "depth": 18,
+          "fraction": 0.5,
+          "centered_logit_rms": {
+            "mean": 3.9390903389553196,
+            "question_bootstrap_95ci": [
+              3.921201566216443,
+              3.9572616129904246
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.3495741318923002,
+            "question_bootstrap_95ci": [
+              1.342605870463906,
+              1.356668145949486
+            ]
+          }
+        },
+        {
+          "depth": 27,
+          "fraction": 0.75,
+          "centered_logit_rms": {
+            "mean": 3.774558400422016,
+            "question_bootstrap_95ci": [
+              3.754737469552897,
+              3.7953794069892304
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.294384429329175,
+            "question_bootstrap_95ci": [
+              1.2867118004249694,
+              1.3025054793150104
+            ]
+          }
+        },
+        {
+          "depth": 35,
+          "fraction": 0.9722222222222222,
+          "centered_logit_rms": {
+            "mean": 1.273092157249188,
+            "question_bootstrap_95ci": [
+              1.2629793336015323,
+              1.2837893877564928
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.4342192530450565,
+            "question_bootstrap_95ci": [
+              0.43136946322817105,
+              0.4369929891327251
+            ]
+          }
+        },
+        {
+          "depth": 36,
+          "fraction": 1.0,
+          "centered_logit_rms": {
+            "mean": 0.0,
+            "question_bootstrap_95ci": [
+              0.0,
+              0.0
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.0,
+            "question_bootstrap_95ci": [
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "key": "pythia",
+      "label": "Pythia-2.8B (32 layers)",
+      "kind": "layer",
+      "final_depth": 32,
+      "depths": [
+        {
+          "depth": 1,
+          "fraction": 0.03125,
+          "centered_logit_rms": {
+            "mean": 3.4742243725887447,
+            "question_bootstrap_95ci": [
+              3.4621248903967063,
+              3.4867184610699895
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.3431421583686045,
+            "question_bootstrap_95ci": [
+              1.3372083700773716,
+              1.3495854151813835
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "fraction": 0.0625,
+          "centered_logit_rms": {
+            "mean": 3.431421721914589,
+            "question_bootstrap_95ci": [
+              3.4190185189572353,
+              3.4439153651015
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.3260670683711033,
+            "question_bootstrap_95ci": [
+              1.3204278293364673,
+              1.3322451701324958
+            ]
+          }
+        },
+        {
+          "depth": 4,
+          "fraction": 0.125,
+          "centered_logit_rms": {
+            "mean": 3.32890512498669,
+            "question_bootstrap_95ci": [
+              3.31565086409354,
+              3.342319958675397
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.2853192599990497,
+            "question_bootstrap_95ci": [
+              1.2801194232896929,
+              1.2909038131286088
+            ]
+          }
+        },
+        {
+          "depth": 8,
+          "fraction": 0.25,
+          "centered_logit_rms": {
+            "mean": 3.127908237972553,
+            "question_bootstrap_95ci": [
+              3.1145753729963808,
+              3.1411998965086863
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.2066365439939122,
+            "question_bootstrap_95ci": [
+              1.201575473261175,
+              1.2120373257622192
+            ]
+          }
+        },
+        {
+          "depth": 16,
+          "fraction": 0.5,
+          "centered_logit_rms": {
+            "mean": 2.6168818180731153,
+            "question_bootstrap_95ci": [
+              2.6005697575191524,
+              2.6331137452228006
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 1.0083121003100683,
+            "question_bootstrap_95ci": [
+              1.0021927681979896,
+              1.0148682649953031
+            ]
+          }
+        },
+        {
+          "depth": 24,
+          "fraction": 0.75,
+          "centered_logit_rms": {
+            "mean": 2.0897305393408137,
+            "question_bootstrap_95ci": [
+              2.071188599662222,
+              2.109346117230533
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.8103090217914397,
+            "question_bootstrap_95ci": [
+              0.8011733755831785,
+              0.8201280365418051
+            ]
+          }
+        },
+        {
+          "depth": 31,
+          "fraction": 0.96875,
+          "centered_logit_rms": {
+            "mean": 1.2825691833534283,
+            "question_bootstrap_95ci": [
+              1.2699225741717697,
+              1.2959055696219266
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.49829207398313863,
+            "question_bootstrap_95ci": [
+              0.49185804308560965,
+              0.5053910837877282
+            ]
+          }
+        },
+        {
+          "depth": 32,
+          "fraction": 1.0,
+          "centered_logit_rms": {
+            "mean": 0.0,
+            "question_bootstrap_95ci": [
+              0.0,
+              0.0
+            ]
+          },
+          "relative_centered_rms": {
+            "mean": 0.0,
+            "question_bootstrap_95ci": [
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

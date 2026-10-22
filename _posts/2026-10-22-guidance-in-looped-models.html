@@ -1,0 +1,362 @@
+---
+layout: essay
+title: "Guidance is becoming a cheat code for LLMs"
+date: 2026-10-22
+permalink: /blog/2026/10/guidance-in-looped-models/
+blog: true
+reading_time: 15
+excerpt: "Guidance keeps appearing in generative models. Loops offer a useful reference predictor—and a way to revisit the gap between guiding a token and guiding a whole answer."
+tags:
+  - guidance
+  - looped models
+  - generative modeling
+---
+
+<p class="opening">Guidance keeps turning up. Diffusion models contrast conditional and unconditional predictions; language models contrast experts, smaller models, or different layers. The recurring idea is simple: take a prediction, subtract a reference, and push a little further in the direction of their difference.</p>
+
+<p>Looped language models give this idea an especially natural home: the reference can come from an earlier pass through the same network. But to understand the connection to diffusion, we need to follow something less conspicuous than the predictions themselves: the normalizing constant.</p>
+
+<nav class="contents" aria-label="In this article">
+  <a href="#diffusion">Diffusion</a><a href="#sequences">Joint vs. sequential</a><a href="#loops">Loooooop</a><a href="#cancellation">The cancellation</a><a href="#measurements">The measurements</a><a href="#connections">Broader connections</a>
+</nav>
+
+<h2 id="diffusion"><span class="section-number">01</span>Diffusion gets to ignore a normalizer</h2>
+
+<p>Start with a conditional density \(p(x\mid c)\), where \(c\) might be a text prompt. Suppose we want to favor samples that are especially characteristic of that condition. One way to express this preference is to tilt the density:</p>
+
+<div class="equation">\[
+  \widetilde p_w(x\mid c)
+  =\frac{1}{Z_w(c)}\,
+  \frac{p(x\mid c)^{1+w}}{p(x)^w},\qquad w\geq0.
+  \tag{1}
+\]</div>
+
+<p>The ratio \(p(x\mid c)/p(x)\) rewards samples that the condition helps explain. At \(w=0\), we recover ordinary conditional generation. Increasing \(w\) strengthens that preference. The denominator \(Z_w(c)\) makes the density integrate to one.</p>
+
+<p>Diffusion uses the corresponding construction at each noise level \(t\). With \(x_t\) denoting the whole noisy sample, take the log-gradient of the tilted density:</p>
+
+<div class="equation">\[
+  \nabla_{x_t}\log\widetilde p_{t,w}(x_t\mid c)
+  =(1+w)\nabla_{x_t}\log p_t(x_t\mid c)
+  -w\nabla_{x_t}\log p_t(x_t).
+  \tag{2}
+\]</div>
+
+<p>This is the score combination behind <a href="https://arxiv.org/abs/2207.12598">classifier-free guidance</a>. The normalizer depends on the condition and noise level, but not on the sample coordinates \(x_t\). Its gradient is zero. We can therefore evaluate the tilted score without evaluating the integral defining \(Z_{t,w}\).</p>
+
+<details class="proof" id="proof-diffusion">
+  <summary>Show the density-to-score derivation</summary>
+  <div class="proof-body">
+    <p>At a fixed noise level, assume differentiable positive densities and a finite normalizer. Taking logarithms of the noisy version of Equation (1) gives</p>
+    <div class="equation">\[
+      \log\widetilde p_{t,w}
+      =(1+w)\log p_t(x_t\mid c)-w\log p_t(x_t)-\log Z_{t,w}(c).
+    \]</div>
+    <p>Differentiate with respect to \(x_t\). Since \(Z_{t,w}(c)\) is constant in that variable, the last term disappears, giving Equation (2). Bayes' rule also gives</p>
+    <div class="equation">\[
+      \frac{p_t(x_t\mid c)}{p_t(x_t)}
+      =\frac{p_t(c\mid x_t)}{p(c)}.
+    \]</div>
+    <p>Thus the same tilt can be written as \(p_t(x_t\mid c)\,p_t(c\mid x_t)^w\), up to a factor depending only on \(c\). With exact scores, this is an exact identity at that noise level.</p>
+  </div>
+</details>
+
+<p class="aside">There is a subtlety here: an exact tilted score at each noise level does not by itself imply that the complete diffusion sampler produces the clean-data tilt in Equation (1). Sander Dieleman added this qualification in the <a href="https://sander.ai/2022/05/26/guidance.html">May 29 correction to his guidance post</a>; later analyses by <a href="https://arxiv.org/abs/2408.09000">Bradley and Nakkiran</a> and <a href="https://arxiv.org/abs/2409.13074">Chidambaram et al.</a> make the distinction precise. What we use here is the score identity at a fixed noise level.</p>
+
+<h2 id="sequences"><span class="section-number">02</span>Tokens make that normalizer matter</h2>
+
+<p>We can perform a very similar subtraction with an LLM's next-token logits. <a href="https://arxiv.org/abs/2210.15097">Contrastive decoding</a> uses an expert and an amateur model; <a href="https://arxiv.org/abs/2309.03883">DoLa</a> reads predictions from different layers. The reference and decoding constraints vary, but the idea of contrasting predictions already has a history in language modeling.</p>
+
+<p>The complication is that a next-token distribution is conditional on what has already been generated. In his <a href="https://sander.ai/2022/05/26/guidance.html">2022 post</a>, Sander put his intuition this way:</p>
+
+<blockquote>
+  <p>“my hunch is that diffusion guidance works so well precisely because we are able to apply it to the joint distribution”</p>
+  <footer>Sander Dieleman, <a href="https://sander.ai/2022/05/26/guidance.html">Guidance: a cheat code for diffusion models</a> (2022)</footer>
+</blockquote>
+
+<p>His contrast was with modifying sequential conditionals individually. We can make that distinction explicit with two predictors: a stronger one \(p_K\) and a reference \(p_E\). Both see the same prefix \(s\). Suppress the fixed prompt in the notation, assume positive token probabilities, and define</p>
+
+<div class="equation">\[
+  a(v\mid s)=\frac{p_K(v\mid s)^{1+w}}{p_E(v\mid s)^w},
+  \qquad C(s)=\sum_v a(v\mid s).
+\]</div>
+
+<p>Local guidance samples the next token from \(q(v\mid s)=a(v\mid s)/C(s)\). This is exactly what softmax of \((1+w)z_K-wz_E\) computes. Now consider a complete answer \(y=(y_1,\ldots,y_T)\), with a fixed length \(T\). Define its unnormalized guided weight as</p>
+
+<div class="equation">\[
+  A(y)=\prod_{t=1}^T a(y_t\mid y_{&lt;t})
+  =\frac{P_K(y)^{1+w}}{P_E(y)^w}.
+\]</div>
+
+<p>Guiding the whole answer normalizes these weights once. Guiding each token normalizes at every prefix:</p>
+
+<div class="equation">\[
+  Q_{\rm joint}(y)=\frac{A(y)}{Z},
+  \qquad
+  Q_{\rm local}(y)=\frac{A(y)}{\prod_{t=1}^T C(y_{&lt;t})},
+  \quad Z=\sum_y A(y).
+  \tag{3}
+\]</div>
+
+<p>The numerators agree. The denominators generally do not: different answers visit different prefixes, and can accumulate different normalizing factors. Those factors change the relative probability of complete answers. This is why a valid guided distribution for each next token need not implement the intended guided distribution over answers.</p>
+
+<h3>The missing term looks into the future</h3>
+
+<p>Every joint distribution admits a sequential factorization. The issue is whether the simple local rule gives us the <em>right</em> conditionals. Let \(H(s)\) be the total unnormalized guided weight of every possible completion after prefix \(s\). The exact conditional of the joint target is</p>
+
+<div class="equation">\[
+  Q_{\rm joint}(v\mid s)
+  =\frac{a(v\mid s)H(sv)}{\sum_u a(u\mid s)H(su)}.
+  \tag{4}
+\]</div>
+
+<p>The term \(H(sv)\) accounts for all the futures opened up by choosing \(v\). Ordinary local guidance omits it. Computing it exactly is usually impractical, because it requires summing over possible continuations.</p>
+
+<details class="proof" id="proof-lookahead">
+  <summary>Show the exact sequential factorization</summary>
+  <div class="proof-body">
+    <p>Let \(A_{\rm past}(s)\) be the product of guided weights along the prefix. Define \(H(s)\) as the sum of the remaining products over completions of total length \(T\), with \(H(y)=1\) for a complete answer. It satisfies</p>
+    <div class="equation">\[
+      H(s)=\sum_v a(v\mid s)H(sv),\qquad H(\varnothing)=Z.
+    \]</div>
+    <p>The joint target's marginal prefix mass is \(Q_{\rm joint}(s)=A_{\rm past}(s)H(s)/Z\). Divide the mass of \(sv\) by the mass of \(s\):</p>
+    <div class="equation">\[
+      \frac{Q_{\rm joint}(sv)}{Q_{\rm joint}(s)}
+      =\frac{a(v\mid s)H(sv)}{H(s)}.
+    \]</div>
+    <p>This gives Equation (4). The local rule agrees whenever \(H(sv)\) is the same for every candidate \(v\) at that prefix. A shared network or a shared output head does not alone enforce this condition.</p>
+  </div>
+</details>
+
+<h3>A tiny example makes the difference visible</h3>
+
+<p>Suppose an answer has just two tokens. Both predictors choose \(A\) or \(B\) with probability \(1/2\). After \(A\), both remain uniform over \(1,2\). After \(B\), the reference is still uniform but the stronger predictor assigns probabilities \(0.9,0.1\). Local guidance cannot change the first decision: the predictors agree there. The joint target can, because it sees the guided weight of the continuations after \(B\).</p>
+
+<figure class="toy" id="guidance-toy">
+  <h3>Guide one token, or the whole answer?</h3>
+  <p class="toy-description">After B, the stronger predictor uses (<span id="strong-b1">0.90</span>, <span id="strong-b2">0.10</span>); the reference uses (0.50, 0.50). Shrink their difference to see the two sequence distributions approach each other.</p>
+  <div class="toy-controls">
+    <div><label for="toy-strength">Guidance strength w <output id="strength-value" for="toy-strength">1.00</output></label><input id="toy-strength" type="range" min="0" max="3" step="0.05" value="1"></div>
+    <div><label for="toy-difference">Probability difference after B <output id="difference-value" for="toy-difference">0.40</output></label><input id="toy-difference" type="range" min="0" max="0.4" step="0.01" value="0.4"></div>
+  </div>
+  <div class="probability"><span>Local: first token B</span><div class="bar" aria-hidden="true"><span style="width:50%"></span></div><output>50.0%</output></div>
+  <div class="probability joint"><span>Joint: first token B</span><div class="bar" aria-hidden="true"><span id="joint-b-bar" style="width:62.1212%"></span></div><output id="joint-b-value" aria-live="polite">62.1%</output></div>
+  <div class="table-scroll"><table><caption>Probabilities of the four complete answers</caption><thead><tr><th scope="col">Answer</th><th scope="col">Strong</th><th scope="col">Reference</th><th scope="col">Local</th><th scope="col">Joint</th></tr></thead><tbody>
+    <tr><th scope="row">A1</th><td id="toy-strong-0">0.250</td><td id="toy-reference-0">0.250</td><td id="toy-local-0">0.250</td><td id="toy-joint-0">0.189</td></tr>
+    <tr><th scope="row">A2</th><td id="toy-strong-1">0.250</td><td id="toy-reference-1">0.250</td><td id="toy-local-1">0.250</td><td id="toy-joint-1">0.189</td></tr>
+    <tr><th scope="row">B1</th><td id="toy-strong-2">0.450</td><td id="toy-reference-2">0.250</td><td id="toy-local-2">0.494</td><td id="toy-joint-2">0.614</td></tr>
+    <tr><th scope="row">B2</th><td id="toy-strong-3">0.050</td><td id="toy-reference-3">0.250</td><td id="toy-local-3">0.006</td><td id="toy-joint-3">0.008</td></tr>
+  </tbody></table></div>
+  <div class="toy-stats"><span>Normalizer after A: <strong>1</strong></span><span>Normalizer after B: <output id="cb-value">1.640</output></span><span>Sequence total variation: <output id="tv-value">12.12%</output></span></div>
+  <figcaption>Exact probabilities from a four-answer toy model, not LLM evaluation scores. At the initial settings, \(C(A)=1\), \(C(B)=1.64\), and the joint target chooses B with probability \(1.64/(1+1.64)\). Setting either slider to zero makes local and joint guidance agree.</figcaption>
+  <noscript><p class="table-note">The table shows w = 1 and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
+</figure>
+
+<h2 id="loops"><span class="section-number">03</span>Loooooop</h2>
+
+<p>A looped Transformer spends more computation before emitting the next token by repeatedly applying a shared block. For the same prefix, we can read out a prediction after an early loop and another after the final loop. The network supplies its own reference.</p>
+
+<div class="trajectory" role="img" aria-label="An early recurrent state h E is refined through the same shared block into a later state h K; guidance extrapolates from their logit readouts.">
+  <div class="state">\(h_E\)<small>Early readout \(z_E\)</small></div><span class="arrow" aria-hidden="true">&rarr;</span>
+  <div class="state">\(f,\,f,\,\ldots\)<small>More loops, same block</small></div><span class="arrow" aria-hidden="true">&rarr;</span>
+  <div class="state">\(h_K\)<small>Final readout \(z_K\)</small></div>
+</div>
+
+<p><a href="https://arxiv.org/html/2610.02185v1">LoopCD</a> uses these recurrent readouts for contrastive decoding. Its logit variant extrapolates from the early prediction toward the later one:</p>
+
+<div class="equation">\[
+  z_{\rm guided}=z_K+w(z_K-z_E),\qquad
+  q=\operatorname{softmax}(z_{\rm guided}).
+  \tag{5}
+\]</div>
+
+<p>The paper's standard logit reference is the first loop, so the two readouts need not come from adjacent iterations. It also studies hidden-state guidance; our probability argument below concerns the logit variant. Passing a hidden-state combination through nonlinear output layers need not give Equation (5).</p>
+
+<p>Why might this be useful beyond making the reference convenient? Reusing the block and readout makes it plausible that early and late predictions remain compatible. That suggests an empirical question: <em>are their logits actually closer than predictions read from different layers of an ordinary LLM?</em> If so, we have a reason to examine the small-difference limit of the normalization problem.</p>
+
+<h3 id="cancellation">What cancels when the readouts are close?</h3>
+
+<p>At a fixed prefix, write \(\delta=z_K-z_E\). The exact local normalizer has a useful interpretation:</p>
+
+<div class="equation">\[
+  \log C(s)
+  =D_{\rm KL}(p_K\Vert q)+wD_{\rm KL}(p_K\Vert p_E).
+  \tag{6}
+\]</div>
+
+<p>For \(w\geq0\), both terms are nonnegative. The normalizer accounts for disagreement between the readouts and the extra change introduced by guidance.</p>
+
+<details class="proof" id="proof-kl">
+  <summary>Derive the exact KL identity</summary>
+  <div class="proof-body">
+    <p>Suppress the prefix and use \(\log q=(1+w)\log p_K-w\log p_E-\log C\). Rearranging gives</p>
+    <div class="equation">\[
+      \log\frac{p_K(v)}{q(v)}
+      =\log C-w\log\frac{p_K(v)}{p_E(v)}.
+    \]</div>
+    <p>Take the expectation over \(v\sim p_K\). The left side becomes \(D_{\rm KL}(p_K\Vert q)\), while the final expectation is \(D_{\rm KL}(p_K\Vert p_E)\). Moving that term to the left yields Equation (6). This identity is exact and does not require small logit differences.</p>
+  </div>
+</details>
+
+<p>Now assume that, after removing an irrelevant constant offset, \(\delta=\epsilon d\), with \(d\) bounded and \(\epsilon\) small. Keep the guidance strength fixed and bounded. A Taylor expansion gives</p>
+
+<div class="key-result">
+  <div class="equation">\[
+    \boxed{\log C(s)
+    =\frac{w(1+w)}{2}\operatorname{Var}_{p_E}(\delta)
+    +O(\epsilon^3).}
+    \tag{7}
+  \]</div>
+  <p>The constant and first-order terms cancel. Guidance changes token log-odds at first order; its local log-normalization cost starts at second order.</p>
+</div>
+
+<p>This is the cancellation that makes the connection interesting. The normalization factor has not vanished exactly. Its leading contribution is quadratic in the logit difference.</p>
+
+<details class="proof" id="proof-taylor">
+  <summary>Work through the Taylor expansion</summary>
+  <div class="proof-body">
+    <p>Define the log moment-generating function of the logit difference under the reference distribution:</p>
+    <div class="equation">\[
+      \psi(\alpha)=\log\mathbb E_{v\sim p_E}e^{\alpha\delta(v)}.
+    \]</div>
+    <p>Softmax gives \(p_K(v)=p_E(v)e^{\delta(v)-\psi(1)}\). Substituting into the definition of \(C\), we obtain the exact expression</p>
+    <div class="equation">\[
+      \log C=\psi(1+w)-(1+w)\psi(1).
+    \]</div>
+    <p>For \(\delta=\epsilon d\) with uniformly bounded \(d\), and bounded \(\alpha\), expand</p>
+    <div class="equation">\[
+      \psi(\alpha)=\alpha\mu+
+      \frac{\alpha^2}{2}\sigma^2+O(\epsilon^3),
+      \quad \mu=\mathbb E_{p_E}\delta,
+      \quad \sigma^2=\operatorname{Var}_{p_E}(\delta).
+    \]</div>
+    <p>The two linear terms are both \((1+w)\mu\). Their difference is zero; the remaining quadratic coefficient is</p>
+    <div class="equation">\[
+      \frac{(1+w)^2-(1+w)}{2}\sigma^2
+      =\frac{w(1+w)}{2}\sigma^2.
+    \]</div>
+    <p>Adding any constant to \(\delta\) adds a linear term to \(\psi\), which cancels in exactly the same way. The relevant assumption concerns variation across tokens, not the arbitrary origin of the logits.</p>
+    <p>For comparison, the change in log-odds relative to the final predictor is exactly</p>
+    <div class="equation">\[
+      \log\frac{q(v)}{q(u)}-\log\frac{p_K(v)}{p_K(u)}
+      =w\bigl(\delta(v)-\delta(u)\bigr).
+    \]</div>
+    <p>For fixed \(w\), this is \(O(\epsilon)\), whereas \(\log C\) begins at \(O(\epsilon^2)\).</p>
+  </div>
+</details>
+
+<h3>From a local cancellation to a joint approximation</h3>
+
+<p>To return to whole answers, suppose \(0\leq\log C(s)\leq\eta\) at <em>every relevant prefix</em>. For fixed-length answers, Equation (3) then implies</p>
+
+<div class="equation">\[
+  \left|\log\frac{Q_{\rm local}(y)}{Q_{\rm joint}(y)}\right|
+  \leq T\eta.
+  \tag{8}
+\]</div>
+
+<p>If the small-difference assumption holds uniformly, then \(\eta=O(\epsilon^2)\). The sequence-level mismatch is therefore \(O(T\epsilon^2)\). This gives the connection we were looking for: a regime in which the simple sequential rule approximates the globally tilted joint distribution, without explicitly evaluating the future-completion weights.</p>
+
+<details class="proof" id="proof-sequence">
+  <summary>Prove the sequence bound, including the global normalizer</summary>
+  <div class="proof-body">
+    <p>Set \(D(y)=\prod_t C(y_{&lt;t})\). Since \(A(y)=Q_{\rm local}(y)D(y)\), summing over answers gives</p>
+    <div class="equation">\[
+      Z=\sum_y Q_{\rm local}(y)D(y)
+       =\mathbb E_{Q_{\rm local}}D(Y).
+    \]</div>
+    <p>The prefix bound gives \(1\leq D(y)\leq e^{T\eta}\) for every answer. Its expectation obeys the same bounds, so \(0\leq\log Z\leq T\eta\). Finally,</p>
+    <div class="equation">\[
+      \log\frac{Q_{\rm local}(y)}{Q_{\rm joint}(y)}
+      =\log Z-\log D(y).
+    \]</div>
+    <p>Both terms lie in \([0,T\eta]\), establishing Equation (8). This argument retains the global normalizer rather than dropping it.</p>
+    <p>A finite, non-asymptotic bound is also available. Let \(R=\max_v\delta(v)-\min_v\delta(v)\). In the preceding proof, \(\psi''(\alpha)\) is the variance of \(\delta\) under an exponentially tilted distribution, and is at most \(R^2/4\). The remainder for linear interpolation of \(\psi\) at 0 and 1, evaluated at \(1+w\), gives</p>
+    <div class="equation">\[
+      0\leq\log C\leq\frac{w(1+w)}{8}R^2.
+    \]</div>
+    <p>Thus a uniform range bound \(R(s)\leq R_*\) yields \(\eta=w(1+w)R_*^2/8\). This makes clear why average RMS alone cannot certify the sequence guarantee. The proof uses a fixed finite horizon and common positive support; unrestricted generation with EOS needs corresponding control of length and the partition function.</p>
+  </div>
+</details>
+
+<p>The condition is stronger than having a small average discrepancy on a dataset. Long answers accumulate the residual, and large guidance strengths amplify it. The mathematics also applies to any pair of sufficiently close predictors. Loops are a possible way to obtain such a pair, not an extra algebraic assumption.</p>
+
+<h2 id="measurements"><span class="section-number">04</span>Are loop readouts actually closer?</h2>
+
+<p>This is where a numerical check helps. We compared two looped models, Huginn-0125 and Ouro-2.6B, with two ordinary Transformers, Qwen2.5-3B and Pythia-2.8B. Each model saw the same 1,024 text prefixes: eight positions on each of 128 GSM8K development questions. For each prefix, we compared an intermediate readout with that model's own final readout.</p>
+
+<p>The main measurement is the vocabulary RMS of the logit difference after removing its mean. This removes an arbitrary offset that has no effect on softmax:</p>
+
+<div class="equation">\[
+  \operatorname{RMS}_{\rm centered}(\delta)
+  =\sqrt{\frac{1}{V}\sum_{v=1}^V(\delta_v-\bar\delta)^2},
+  \qquad \bar\delta=\frac{1}{V}\sum_v\delta_v.
+\]</div>
+
+<p>We align the comparisons by the fraction of deployed depth: a quarter, half, and three quarters of the way through the model. For Huginn these are loops 8, 16, and 24 out of 32; for Ouro, loops 1, 2, and 3 out of 4. The corresponding layer indices are 9, 18, and 27 out of 36 for Qwen, and 8, 16, and 24 out of 32 for Pythia.</p>
+
+<figure class="wide">
+  <img src="{{ '/blog/guidance-in-looped-models/logit-gaps.svg' | relative_url }}" width="1440" height="660" loading="lazy" alt="Two plots compare intermediate-to-final logit gaps across model depth. At one quarter, one half, and three quarters of deployed depth, Huginn and Ouro have substantially smaller centered RMS gaps than Qwen and Pythia. The ordering also holds after dividing by final-logit RMS.">
+  <figcaption><strong>Measured readout differences, on identical text prefixes.</strong> Left: centered logit RMS. Right: the same gap divided by the final readout's centered RMS at each position, then averaged. Both vertical axes are logarithmic. Bands show 95% question-bootstrap intervals; the final-depth zero is omitted because it is true by definition. Lines connect measured depths, rather than asserting a continuous trajectory.</figcaption>
+  <div class="figure-links"><a href="{{ '/blog/guidance-in-looped-models/logit-gaps.pdf' | relative_url }}">Figure PDF</a><a href="{{ '/blog/guidance-in-looped-models/blog_primary_table.csv' | relative_url }}">Table CSV</a><a href="https://github.com/Nicholas0228/loop-distil/tree/a92255d1626e59ba17cdcaae40494040c42b4aed/reports/depth_logit_comparison_20261021">Full experiment and audits</a></div>
+</figure>
+
+<div class="table-scroll">
+  <table>
+    <caption>Mean centered logit RMS against each model's final readout</caption>
+    <thead><tr><th scope="col">Model</th><th scope="col">Final depth</th><th scope="col">25% depth</th><th scope="col">50% depth</th><th scope="col">75% depth</th></tr></thead>
+    <tbody>
+      <tr class="loop-row"><td>Huginn-0125</td><td>32 loops</td><td>0.798</td><td>0.701</td><td>0.268</td></tr>
+      <tr class="loop-row"><td>Ouro-2.6B</td><td>4 loops</td><td>1.110</td><td>0.533</td><td>0.283</td></tr>
+      <tr><td>Qwen2.5-3B</td><td>36 layers</td><td>4.311</td><td>3.939</td><td>3.775</td></tr>
+      <tr><td>Pythia-2.8B</td><td>32 layers</td><td>3.128</td><td>2.617</td><td>2.090</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p><strong>The looped models' mean gaps are 2.8–14.1 times smaller</strong> across these twelve loop-versus-layer comparisons. Every paired 95% bootstrap interval for the ratio lies below one. At half depth, for example, Huginn's gap is 0.268 times Pythia's, with interval [0.261, 0.276]; Ouro's is 0.203 times Pythia's, with interval [0.199, 0.209]. The ordering survives both the scale normalization in the right panel and a check using only the question prefixes, before any answer text.</p>
+
+<details class="proof" id="measurement-protocol">
+  <summary>Read the measurement protocol and its scope</summary>
+  <div class="proof-body">
+    <p>The models are frozen base checkpoints. Inputs use a common plain-text, eight-shot Q/A format. Answer-prefix positions come from cached Huginn-32 continuations, with no filtering for answer correctness. We selected shared character boundaries that round-trip exactly through all four tokenizers, including the prompt boundary. This matches text, not token IDs across different vocabularies.</p>
+    <p>Intermediate states use each architecture's native final normalization and output head, including Huginn's coda. We did not fit a tuned lens. Native forwards use BF16; full-vocabulary statistics use float64 at temperature one. A native-forward check and a future-token control passed at all 84 audited model/depth settings. An independent audit recomputed 28,672 depth-position records.</p>
+    <p>Intervals resample the 128 questions, retaining each question's eight positions together; paired comparisons resample the same questions for both models. We used 5,000 bootstrap draws. These are individual intervals over the sampled questions, not simultaneous intervals or estimates of variation across training seeds.</p>
+    <p>Depth fractions are a comparison convention, not equal FLOPs or equal predictor competence. The models differ in architecture, training, vocabulary, and size. Their gaps support a statement about these checkpoints and readout procedures; they do not isolate weight sharing as the cause. Ordinary layers may also benefit from a trained intermediate readout.</p>
+    <p>LoopCD's first-loop reference deserves separate care: it is 1/32 of the deployed depth for Huginn but 1/4 for Ouro. We therefore do not present “first versus final” as a matched-depth comparison. The source report includes that diagnostic separately.</p>
+  </div>
+</details>
+
+<p>These results support the comparative premise: for these models, loop readouts are much closer to the final logits than ordinary intermediate-layer readouts are. They do not yet certify the uniform small-difference assumption used in the sequence bound. In particular, smaller RMS need not make the quadratic expansion numerically accurate at every prefix.</p>
+
+<details class="proof" id="measurement-taylor">
+  <summary>How accurate is the quadratic approximation itself?</summary>
+  <div class="proof-body">
+    <p>We also computed the exact \(\log C\) and its quadratic approximation. At a quarter depth with \(w=0.5\), the median relative error across the 1,024 positions is 76.9% for Huginn and 75.3% for Ouro, versus 29.2% for Qwen and 27.6% for Pythia. Here relative error means \(|\text{quadratic}-\log C|/\max(\log C,10^{-12})\); the floor is inactive at these positions. The looped models have smaller absolute normalizers in this comparison, but not smaller relative Taylor error.</p>
+    <p>Nor are all tokenwise gaps tiny: even at three-quarter depth, the largest observed absolute centered logit difference is 5.60 for Huginn and 6.44 for Ouro. A small vocabulary-average gap can coexist with larger differences on particular tokens. The empirical result is therefore evidence for closer readouts, while the joint-distribution guarantee remains conditional on a stronger bound.</p>
+  </div>
+</details>
+
+<h2 id="connections"><span class="section-number">05</span>A reference from less computation</h2>
+
+<p>There is a useful connection here to <a href="https://arxiv.org/abs/2406.02507">autoguidance</a> in diffusion. Karras and colleagues guide a model using a smaller, less-trained version of itself. The reference does not have to represent the absence of a condition; it can represent a less capable way of making the same prediction. Looped models suggest a particularly economical version of that idea: obtain the reference by stopping the same computation earlier.</p>
+
+<p>Both settings contrast related predictions, but their iterations play different roles. A diffusion step updates a noisy sample at a specified noise level. A loop updates a hidden state while the token prefix stays fixed. Reusing a block does not make its update a score, and it does not give an autoregressive model the ability to revise an entire answer at once. The connection we can establish is through the predictions and their normalizers.</p>
+
+<p>One further observation helps sharpen the question. In Equation (3), local and joint guidance agree exactly whenever the accumulated log-normalizer is constant across answers. It need not be zero. Small logit differences give us a sufficient way to control that variation, but they are not the only possible way. A direct next experiment would measure how much \(\sum_t\log C(y_{&lt;t})\) varies across sampled completions, alongside guidance quality and answer length. That would test the quantity that actually separates the two sequence distributions.</p>
+
+<p>The attraction of loops is that they offer a useful reference almost as a by-product of inference. <a href="https://arxiv.org/html/2610.02185v1">LoopCD reports downstream gains</a> from exploiting this contrast. The measurements here ask a different question: whether the readouts have the closeness that motivates the normalization argument. On these four checkpoints, they do in a comparative sense; the absolute approximation still needs more work.</p>
+
+<p>This brings us back to the question about guiding a whole answer. Under a uniform small-logit-difference assumption, we can approximate the joint tilt with sequential guidance: the change in token log-odds is first order, while the normalization mismatch begins at second order. Loops give us a practical place to look for that regime. I find that a promising connection between guidance in diffusion and language models—and a more precise question to test than whether subtracting two predictions happens to improve a benchmark.</p>
+
+<h3 id="references">References and further reading</h3>
+<ol class="references">
+  <li>Sander Dieleman. <a href="https://sander.ai/2022/05/26/guidance.html">Guidance: a cheat code for diffusion models</a> (2022), including the May 29 correction.</li>
+  <li>Jonathan Ho and Tim Salimans. <a href="https://arxiv.org/abs/2207.12598">Classifier-Free Diffusion Guidance</a> (2022).</li>
+  <li>Xiang Lisa Li et al. <a href="https://arxiv.org/abs/2210.15097">Contrastive Decoding: Open-ended Text Generation as Optimization</a> (2022); Yung-Sung Chuang et al. <a href="https://arxiv.org/abs/2309.03883">DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models</a> (2023).</li>
+  <li><a href="https://arxiv.org/html/2610.02185v1">Decoding Looped Transformers Better for (Almost) Free</a> (LoopCD, 2026).</li>
+  <li>Arwen Bradley and Preetum Nakkiran. <a href="https://arxiv.org/abs/2408.09000">Classifier-Free Guidance is a Predictor-Corrector</a> (2024); Muthu Chidambaram et al. <a href="https://arxiv.org/abs/2409.13074">What does guidance do? A fine-grained analysis in a simple setting</a> (2024).</li>
+  <li>Tero Karras et al. <a href="https://arxiv.org/abs/2406.02507">Guiding a Diffusion Model with a Bad Version of Itself</a> (2024).</li>
+</ol>
+
+<p class="endnote">Revised from my October 20 draft. The numerical section uses measurements completed on October 21, 2026; it adds no new training run or answer-accuracy claim. <a href="https://github.com/Nicholas0228/loop-distil/tree/a92255d1626e59ba17cdcaae40494040c42b4aed/reports/depth_logit_comparison_20261021">Frozen reports and audits</a> · <a href="{{ '/blog/guidance-in-looped-models/paired_rms_comparison.csv' | relative_url }}">Paired comparisons</a> · <a href="{{ '/blog/guidance-in-looped-models/provenance.json' | relative_url }}">Data provenance</a>. The interactive example is an exact calculation on a toy distribution.</p>
