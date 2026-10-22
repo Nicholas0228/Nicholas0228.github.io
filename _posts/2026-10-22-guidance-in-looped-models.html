@@ -72,14 +72,14 @@ tags:
 
 <p>We can perform a very similar subtraction with an LLM's next-token logits. Contrastive decoding<sup class="citation" id="cite-contrastive-decoding-1"><a href="#ref-contrastive-decoding" role="doc-noteref" aria-label="Reference 8: Xiang Lisa Li et al., Contrastive Decoding: Open-ended Text Generation as Optimization">8</a></sup> uses an expert and an amateur model; DoLa<sup class="citation" id="cite-dola-1"><a href="#ref-dola" role="doc-noteref" aria-label="Reference 9: Yung-Sung Chuang et al., DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models">9</a></sup> reads predictions from different layers. The reference and decoding constraints vary, but the idea of contrasting predictions already has a history in language modeling.</p>
 
-<p>The complication is that a next-token distribution is conditional on what has already been generated. In his 2022 post, Sander put his intuition this way:</p>
+<p>As Sander noted in his 2022 blog post:</p>
 
 <blockquote>
   <p>“my hunch is that diffusion guidance works so well precisely because we are able to apply it to the joint distribution”</p>
   <footer>Sander Dieleman, Guidance: a cheat code for diffusion models<sup class="citation" id="cite-sander-2"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup> (2022)</footer>
 </blockquote>
 
-<p>His contrast was with modifying sequential conditionals individually. We can make that distinction explicit with two predictors: a stronger one \(p_K\) and a reference \(p_E\). Both see the same prefix \(s\). Suppress the fixed prompt in the notation, assume positive token probabilities, and define</p>
+<p>We compare guiding each token with guiding the whole answer. Let \(p_K\) be the stronger predictor and \(p_E\) the reference, both given the same prefix \(s\). Suppress the fixed prompt in the notation, assume positive token probabilities, and define</p>
 
 <div class="equation">\[
   a(v\mid s)=\frac{p_K(v\mid s)^{1+w}}{p_E(v\mid s)^w},
@@ -105,21 +105,18 @@ tags:
 
 <p>The numerators agree. The denominators generally do not: different answers visit different prefixes, and can accumulate different normalizing factors. Those factors change the relative probability of complete answers. This is why a valid guided distribution for each next token need not implement the intended guided distribution over answers.</p>
 
-<h3>The missing term looks into the future</h3>
-
-<p>Every joint distribution admits a sequential factorization. The issue is whether the simple local rule gives us the <em>right</em> conditionals. Let \(H(s)\) be the total unnormalized guided weight of every possible completion after prefix \(s\). The exact conditional of the joint target is</p>
-
-<div class="equation">\[
-  Q_{\rm joint}(v\mid s)
-  =\frac{a(v\mid s)H(sv)}{\sum_u a(u\mid s)H(su)}.
-  \tag{4}
-\]</div>
-
-<p>The term \(H(sv)\) accounts for all the futures opened up by choosing \(v\). Ordinary local guidance omits it. Computing it exactly is usually impractical, because it requires summing over possible continuations.</p>
-
 <details class="proof" id="proof-lookahead">
-  <summary>Show the exact sequential factorization</summary>
+  <summary>How would exact guidance of the whole answer choose each token?</summary>
   <div class="proof-body">
+    <p>Every joint distribution admits a sequential factorization. The issue is whether the simple local rule gives us the <em>right</em> conditionals. Let \(H(s)\) be the total unnormalized guided weight of every possible completion after prefix \(s\). The exact conditional of the joint target is</p>
+
+    <div class="equation">\[
+      Q_{\rm joint}(v\mid s)
+      =\frac{a(v\mid s)H(sv)}{\sum_u a(u\mid s)H(su)}.
+      \tag{4}
+    \]</div>
+
+    <p>The term \(H(sv)\) accounts for all the futures opened up by choosing \(v\). Ordinary local guidance omits it. Computing it exactly is usually impractical, because it requires summing over possible continuations.</p>
     <p>Let \(A_{\rm past}(s)\) be the product of guided weights along the prefix. Define \(H(s)\) as the sum of the remaining products over completions of total length \(T\), with \(H(y)=1\) for a complete answer. It satisfies</p>
     <div class="equation">\[
       H(s)=\sum_v a(v\mid s)H(sv),\qquad H(\varnothing)=Z.
@@ -191,7 +188,19 @@ tags:
 
 <p>The paper's standard logit reference is the first loop, so the two readouts need not come from adjacent iterations. It also studies hidden-state guidance; our probability argument below concerns the logit variant. Passing a hidden-state combination through nonlinear output layers need not give Equation (5).</p>
 
-<p>The reported gains can be substantial. At matched recurrent depth, adaptive LoopCD-Logits raises Ouro-2.6B-Thinking's AIME 2024 pass@1 from <strong>61.88% to 73.33%</strong>; LoopCD-Hidden raises Huginn's HumanEval pass@1 from <strong>22.56% to 31.71%</strong> at 32 loops (Tables 1 and 3).<sup class="citation" id="cite-loopcd-2"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 12: Weihao Liu et al., Decoding Looped Transformers Better for (Almost) Free">12</a></sup> In a separate seven-benchmark multiple-choice comparison, half-depth guidance matches or exceeds the full-depth mean with <strong>22.5–48.2% fewer theoretical forward FLOPs</strong> (Table A9). Gains depend on the setting: fixed logit guidance lowers Huginn's GSM8K accuracy from 42.91% to 41.62% (Table A5).</p>
+<div class="table-scroll" id="loopcd-results">
+  <table class="loopcd-results">
+    <caption>Selected results reported by LoopCD.<sup class="citation" id="cite-loopcd-2"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 12: Weihao Liu et al., Decoding Looped Transformers Better for (Almost) Free">12</a></sup> Scores are percentages.</caption>
+    <thead><tr><th scope="col">Model / task</th><th scope="col">Guidance</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Ouro-2.6B-Thinking<small>AIME 2024 · pass@1</small></th><td>Adaptive logits</td><td>61.88</td><td><strong>73.33</strong></td></tr>
+      <tr><th scope="row">Huginn · 32 loops<small>HumanEval · pass@1</small></th><td>Hidden states</td><td>22.56</td><td><strong>31.71</strong></td></tr>
+      <tr><th scope="row">Huginn · 32 loops<small>GSM8K · accuracy</small></th><td>Fixed logits</td><td>42.91</td><td>41.62</td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="table-note">Same recurrent depth within each row (Tables 1, 3, and A5). Gains vary by task and guidance variant.</p>
+<p>In a separate seven-task comparison, guidance at half depth matches or exceeds the full-depth average with <strong>22.5–48.2% fewer theoretical forward FLOPs</strong> (Table A9).</p>
 
 <p>Why might this be useful beyond making the reference convenient? Reusing the block and readout makes it plausible that early and late predictions remain compatible. That suggests an empirical question: <em>are their logits actually closer than predictions read from different layers of an ordinary LLM?</em> If so, we have a reason to examine the small-difference limit of the normalization problem.</p>
 
@@ -276,7 +285,7 @@ tags:
   \tag{8}
 \]</div>
 
-<p>If the small-difference assumption holds uniformly, then \(\eta=O(\epsilon^2)\). The sequence-level mismatch is therefore \(O(T\epsilon^2)\). This gives the connection we were looking for: a regime in which the simple sequential rule approximates the globally tilted joint distribution, without explicitly evaluating the future-completion weights.</p>
+<p>If the small-difference assumption holds uniformly, then \(\eta=O(\epsilon^2)\). The sequence-level mismatch is therefore \(O(T\epsilon^2)\). This gives the connection we were looking for: a regime in which the simple sequential rule approximates the globally tilted joint distribution, using only the two next-token predictors.</p>
 
 <details class="proof" id="proof-sequence">
   <summary>Prove the sequence bound, including the global normalizer</summary>
@@ -304,7 +313,7 @@ tags:
 
 <h2 id="measurements"><span class="section-number">04</span>Are loop readouts actually closer?</h2>
 
-<p>This is where a numerical check helps. We compared two looped models, Huginn-0125 and Ouro-2.6B, with two ordinary Transformers, Qwen2.5-3B and Pythia-2.8B. Each model saw the same 1,024 text prefixes: eight positions on each of 128 GSM8K development questions. For each prefix, we compared an intermediate readout with that model's own final readout.</p>
+<p>We compared two looped models, Huginn-0125 and Ouro-2.6B, with two ordinary Transformers, Qwen2.5-3B and Pythia-2.8B. Each model saw the same 1,024 text prefixes: eight positions on each of 128 GSM8K development questions. For each prefix, we compared an intermediate readout with that model's own final readout.</p>
 
 <p>The main measurement is the vocabulary RMS of the logit difference after removing its mean. This removes an arbitrary offset that has no effect on softmax:</p>
 
@@ -347,13 +356,13 @@ tags:
 
 <h2 id="connections"><span class="section-number">05</span>Beyond guidance</h2>
 
-<p>Guidance is one of several ideas that can travel between diffusion and looped models. In <em>autoguidance</em>, Karras et al. guide a diffusion model with a smaller, less-trained version of itself.<sup class="citation" id="cite-autoguidance-1"><a href="#ref-autoguidance" role="doc-noteref" aria-label="Reference 13: Tero Karras et al., Guiding a Diffusion Model with a Bad Version of Itself">13</a></sup> The useful reference is a weaker prediction of the same thing. Loops offer an economical way to obtain one: stop the same computation earlier.</p>
+<p><strong>A looped model gives us a trajectory to work with.</strong> We can read its predictions along the way and use the differences between them. Autoguidance already exploits a related idea in diffusion: Karras et al. guide a model with a smaller, less-trained version of itself.<sup class="citation" id="cite-autoguidance-1"><a href="#ref-autoguidance" role="doc-noteref" aria-label="Reference 13: Tero Karras et al., Guiding a Diffusion Model with a Bad Version of Itself">13</a></sup> Loops can supply a reference simply by stopping the same computation earlier.</p>
 
-<p>Another connection is to give each loop a sense of where it is along a computation. LoopFormer conditions its shared block on an internal time \(t\) and step size \(\Delta t\), borrowing from diffusion timestep conditioning and shortcut models. It trains shorter trajectories to match the predictions of longer ones, allowing the same model to run at different compute budgets.<sup class="citation" id="cite-loopformer-1"><a href="#ref-loopformer" role="doc-noteref" aria-label="Reference 14: Ahmadreza Jeddi, Marco Ciccone, and Babak Taati, LoopFormer: Elastic-Depth Looped Transformers for Latent Reasoning via Shortcut Modulation">14</a></sup></p>
+<p>We can also train the trajectory to take different routes. LoopFormer gives each loop an internal time \(t\) and step size \(\Delta t\), then trains shorter trajectories to match the predictions of longer ones.<sup class="citation" id="cite-loopformer-1"><a href="#ref-loopformer" role="doc-noteref" aria-label="Reference 14: Ahmadreza Jeddi, Marco Ciccone, and Babak Taati, LoopFormer: Elastic-Depth Looped Transformers for Latent Reasoning via Shortcut Modulation">14</a></sup> This borrows timestep conditioning and shortcut training from diffusion, allowing the same model to work at different compute budgets.</p>
 
-<p><em>Thinking with Looped Flows</em> brings flow modeling into recurrent reasoning itself.<sup class="citation" id="cite-looped-flows-1"><a href="#ref-looped-flows" role="doc-noteref" aria-label="Reference 15: Ayhan Suleymanzade, Chanhyuk Lee, Floor Eijkelboom, Nicholas M. Boffi, İsmail İlkan Ceylan, and Jinwoo Kim, Thinking with Looped Flows">15</a></sup> It trains a recurrent denoiser on progressively less noisy versions of a solution. At inference, a flow turns noise into a solution while the recurrent state carries information between steps. A finer time grid provides more computation; different initial noise samples can produce different valid solutions.</p>
+<p><em>Thinking with Looped Flows</em> brings the connection into the training objective.<sup class="citation" id="cite-looped-flows-1"><a href="#ref-looped-flows" role="doc-noteref" aria-label="Reference 15: Ayhan Suleymanzade, Chanhyuk Lee, Floor Eijkelboom, Nicholas M. Boffi, İsmail İlkan Ceylan, and Jinwoo Kim, Thinking with Looped Flows">15</a></sup> A recurrent denoiser learns from progressively less noisy versions of a solution. At inference, a flow turns noise into a solution while carrying recurrent state between steps. A finer time grid provides more computation; different initial noise samples can produce different valid solutions.</p>
 
-<p>These approaches share a practical question: <strong>how should predictions improve as we spend more computation?</strong> Here, we used intermediate predictions to understand guidance. Time conditioning, shortcut training, and denoising also let us shape how those predictions are produced. Guidance may be an early example of a much wider exchange between diffusion and recurrent reasoning.</p>
+<p>The larger opportunity is to <strong>learn a trajectory of computation that we can guide, compress, and refine</strong>. A short route could give a fast answer; a longer one could resolve a harder problem; intermediate predictions could tell us when more work is useful. Guidance may be only the beginning.</p>
 
 <h3 id="references">References</h3>
 <ol class="references">
