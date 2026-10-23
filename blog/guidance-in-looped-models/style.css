@@ -53,6 +53,7 @@ figcaption{font:13px/1.65 var(--sans);color:var(--muted);margin-top:14px}
 figcaption strong{color:var(--ink)}
 .visual-interlude{width:100%;margin:40px 0}
 .visual-interlude img{width:100%;height:auto;aspect-ratio:16/5;object-fit:cover;object-position:center}
+#connections-interlude img{object-position:center 65%}
 .measurement-figure figcaption{max-width:750px;margin:16px auto 0}
 .figure-links{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:10px;font:12px/1.5 var(--sans)}
 .table-scroll{overflow:auto;margin:26px 0}

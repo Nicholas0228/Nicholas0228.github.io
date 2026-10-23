@@ -3,8 +3,9 @@
 These four photographs are visual breaks in the guidance blog, not model outputs
 or experimental comparisons. All are hosted locally so the page does not depend
 on third-party image requests. Sources and licenses were checked on 2026-10-22.
-The page displays each photo as a centered 3.2:1 banner using CSS object-fit;
-the stored image files are unchanged.
+The page displays each photo as a 3.2:1 banner using CSS object-fit. The river
+photo uses a lower-middle crop to keep the water visible; the others are centered.
+The stored image files are unchanged.
 
 ## Water Reflections
 
@@ -38,7 +39,20 @@ the stored image files are unchanged.
   license change in June 2017.
 - Asset: Wikimedia's 1280-pixel thumbnail; no further edits or cropping.
 
-## Paper Spiral
+## Winding River
+
+- File: `winding-river.jpg` (1600 x 2133)
+- Photographer: John Salvino
+- Title: Winding river through mossy canyon
+- Location: Fjadrargljufur, Iceland
+- Source: <https://unsplash.com/photos/winding-river-through-mossy-canyon-9YubwxAIpw0>
+- License: [Unsplash License](https://unsplash.com/license)
+- Asset: Unsplash's 1600-pixel JPEG rendition; the banner crop is applied with CSS.
+- Download: <https://images.unsplash.com/photo-1496611246382-3fbcd9b0ae7b?fm=jpg&w=1600&q=85&fit=max>
+
+## Earlier Asset: Paper Spiral
+
+Retained in the repository but no longer displayed in the article.
 
 - File: `paper-spiral.jpg` (1400 x 788)
 - Photographer: Artem Podrez
