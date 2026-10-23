@@ -101,34 +101,9 @@ tags:
 
 <p>The numerators are identical, but the normalizers differ: \(Z\) is shared by every sequence, whereas the product of local normalizers depends on the sequence's prefixes \(y_{&lt;t}\). <strong>This is the normalization mismatch.</strong></p>
 
-<details class="proof" id="proof-lookahead">
-  <summary>How would the guided joint distribution choose each token?</summary>
-  <div class="proof-body">
-    <p>Every joint distribution admits a sequential factorization. The issue is whether the simple local rule gives us the <em>right</em> conditionals. For this derivation, abbreviate the unnormalized token weight as \(a(y_t\mid y_{&lt;t})=p_K(y_t\mid y_{&lt;t})^{1+w}/p_E(y_t\mid y_{&lt;t})^w\). Let \(H(y_{&lt;t})\) be the total unnormalized guided weight of all completions after that prefix. Writing \(y_{\leq t}=(y_1,\ldots,y_t)\) for the prefix including the next token, the exact conditional is</p>
-
-    <div class="equation">\[
-      Q_{\rm joint}(y_t\mid y_{&lt;t})
-      =\frac{a(y_t\mid y_{&lt;t})H(y_{\leq t})}{H(y_{&lt;t})}.
-      \tag{4}
-    \]</div>
-
-    <p>The term \(H(y_{\leq t})\) accounts for all the futures opened up by choosing \(y_t\). Ordinary local guidance omits it. Computing it exactly is usually impractical, because it requires summing over possible continuations.</p>
-    <p>For a complete sequence, \(H(y)=1\). Grouping completions by their next token gives</p>
-    <div class="equation">\[
-      H(y_{&lt;t})=\sum_{y_t}a(y_t\mid y_{&lt;t})H(y_{\leq t}),\qquad H(\varnothing)=Z.
-    \]</div>
-    <p>Divide the joint target's probability of the extended prefix by that of the original prefix. The weights of already chosen tokens and the global normalizer cancel:</p>
-    <div class="equation">\[
-      \frac{Q_{\rm joint}(y_{\leq t})}{Q_{\rm joint}(y_{&lt;t})}
-      =\frac{a(y_t\mid y_{&lt;t})H(y_{\leq t})}{H(y_{&lt;t})}.
-    \]</div>
-    <p>This gives Equation (4). The local rule agrees whenever \(H(y_{\leq t})\) is the same for every possible next token at that prefix.</p>
-  </div>
-</details>
-
 <p>Additionally, computing the full-sequence normalizer \(Z\) exactly is impractical for real LLMs: it requires summing over all possible future token sequences, whose number grows exponentially with length.</p>
 
-<p><strong>If the guided joint distribution is our target, practical token-level guidance therefore tolerates a normalization error.</strong> Exact token choices require the future-completion sums in Equation (4); the local rule avoids them by normalizing only the next-token scores. The question is how to make the resulting error small.</p>
+<p><strong>If the guided joint distribution is our target, practical token-level guidance therefore tolerates a normalization error.</strong> The local rule avoids summing over future sequences by normalizing only the next-token scores. The question is how to make the resulting error small.</p>
 
 <h3>A tiny example makes the difference visible</h3>
 
@@ -136,22 +111,28 @@ tags:
 
 <figure class="toy" id="guidance-toy">
   <h3>Same token weights, different sequence probabilities</h3>
-  <p class="toy-description">If the two guidance rules were equivalent, they would give <strong>the same probability of starting with B</strong>. Shrink the predictor difference to see the gap close.</p>
+  <p class="toy-description">Compare token-level \(Q_{\rm local}\) with the joint target \(Q_{\rm joint}\) from Equation (3). If they were equivalent, they would give <strong>the same probability of starting with B</strong>. Shrink the predictor difference to see the gap close.</p>
   <div class="toy-controls">
     <div><label for="toy-strength">Guidance strength w <output id="strength-value" for="toy-strength">1.00</output></label><input id="toy-strength" type="range" min="0" max="3" step="0.05" value="1"></div>
     <div><label for="toy-difference">Probability difference after B <output id="difference-value" for="toy-difference">0.40</output></label><input id="toy-difference" type="range" min="0" max="0.4" step="0.01" value="0.4"></div>
   </div>
   <p class="toy-question">Probability of starting with B</p>
-  <div class="probability"><strong>Token-level</strong><div class="bar" aria-hidden="true"><span style="width:50%"></span></div><output>50.0%</output></div>
-  <div class="probability toy-joint"><strong>Joint target</strong><div class="bar" aria-hidden="true"><span id="joint-b-bar" style="width:62.1212%"></span></div><output id="joint-b-value">62.1%</output></div>
+  <div class="probability"><strong>Token-level<br>\(Q_{\rm local}\)</strong><div class="bar" aria-hidden="true"><span style="width:50%"></span></div><output>50.0%</output></div>
+  <div class="probability toy-joint"><strong>Joint target<br>\(Q_{\rm joint}\)</strong><div class="bar" aria-hidden="true"><span id="joint-b-bar" style="width:62.1212%"></span></div><output id="joint-b-value">62.1%</output></div>
+  <div class="equation">\[
+    \begin{aligned}
+      Q_{\rm local}(y_1=B)&=\frac12,\\
+      Q_{\rm joint}(y_1=B)&=\frac{C(B)}{1+C(B)}.
+    \end{aligned}
+  \]</div>
   <p class="toy-takeaway" aria-live="polite" aria-atomic="true"><strong><span id="toy-gap-value">12.1</span> <span id="toy-gap-label">percentage-point gap.</span></strong> <span id="toy-gap-explanation">Even the first-token probabilities differ.</span></p>
   <details class="toy-details">
     <summary>Show the probabilities and normalizers</summary>
     <p>Both predictors start with a 50–50 choice of A or B. After B, the stronger predictor uses (<span id="strong-b1">0.90</span>, <span id="strong-b2">0.10</span>); the reference uses (0.50, 0.50).</p>
     <p>The normalizers measure the total guided weight of the next-token options. Token-level guidance divides by each prefix's normalizer separately. The guided joint distribution retains their relative weights when comparing full sequences, so a larger normalizer after B makes B more likely from the start.</p>
     <div class="toy-stats"><span>Normalizer after A: <strong>1</strong></span><span>Normalizer after B: <output id="cb-value">1.640</output></span></div>
-    <p class="toy-normalizer-rule">Here, the joint probability of starting with B is \(C(B)/(1+C(B))\).</p>
-    <div class="table-scroll"><table><caption>Probabilities of the four possible sequences</caption><thead><tr><th scope="col">Sequence</th><th scope="col">Strong</th><th scope="col">Reference</th><th scope="col">Token-level</th><th scope="col">Joint target</th></tr></thead><tbody>
+    <p class="toy-normalizer-rule">Here \(C(A)=1\), so the joint target assigns probabilities to A and B in the ratio \(1:C(B)\).</p>
+    <div class="table-scroll"><table><caption>Probabilities of the four possible sequences</caption><thead><tr><th scope="col">Sequence</th><th scope="col">Strong</th><th scope="col">Reference</th><th scope="col">Token-level<br>\(Q_{\rm local}(y)\)</th><th scope="col">Joint target<br>\(Q_{\rm joint}(y)\)</th></tr></thead><tbody>
       <tr><th scope="row">A1</th><td id="toy-strong-0">0.250</td><td id="toy-reference-0">0.250</td><td id="toy-local-0">0.250</td><td id="toy-joint-0">0.189</td></tr>
       <tr><th scope="row">A2</th><td id="toy-strong-1">0.250</td><td id="toy-reference-1">0.250</td><td id="toy-local-1">0.250</td><td id="toy-joint-1">0.189</td></tr>
       <tr><th scope="row">B1</th><td id="toy-strong-2">0.450</td><td id="toy-reference-2">0.250</td><td id="toy-local-2">0.494</td><td id="toy-joint-2">0.614</td></tr>
@@ -192,10 +173,10 @@ tags:
 <div class="equation">\[
   z_{\rm guided}=z_K+w(z_K-z_E),\qquad
   q=\operatorname{softmax}(z_{\rm guided}).
-  \tag{5}
+  \tag{4}
 \]</div>
 
-<p>LoopCD's logit variant uses the first loop as its reference. The paper also combines hidden states before converting them into logits; the analysis below concerns the logit rule in Equation (5).</p>
+<p>LoopCD's logit variant uses the first loop as its reference. The paper also combines hidden states before converting them into logits; the analysis below concerns the logit rule in Equation (4).</p>
 
 <div class="table-scroll" id="loopcd-results">
   <table class="loopcd-results">
@@ -221,55 +202,64 @@ tags:
     \boxed{\log C(y_{&lt;t})
     =\frac{w(1+w)}{2}\operatorname{Var}_{p_E}(\delta)
     +O(\epsilon^3).}
-    \tag{6}
+    \tag{5}
   \]</div>
   <p>The constant and first-order terms cancel. Guidance changes token log-odds at first order; its local log-normalization cost starts at second order.</p>
 </div>
 
-<p>This is why similar loop outputs help: guidance changes token preferences at first order in \(\epsilon\), while the local log-normalizer grows only at second order.</p>
-
 <details class="proof" id="proof-taylor">
-  <summary>Derive Equation (6): the exact identity and Taylor expansion</summary>
+  <summary>Proof of Equation (5)</summary>
   <div class="proof-body">
-    <p id="proof-kl">First, the local normalizer satisfies the exact identity</p>
+    <p id="proof-kl">Fix a prefix \(y_{&lt;t}\). The local normalizer satisfies the exact identity</p>
+    <div class="equation">\[
+      \begin{aligned}
+        \log C(y_{&lt;t})
+        &=D_{\rm KL}\bigl(p_K(\cdot\mid y_{&lt;t})\Vert q(\cdot\mid y_{&lt;t})\bigr)\\
+        &\quad+wD_{\rm KL}\bigl(p_K(\cdot\mid y_{&lt;t})\Vert p_E(\cdot\mid y_{&lt;t})\bigr).
+      \end{aligned}
+      \tag{6}
+    \]</div>
+    <p><strong>Proof of Equation (6).</strong> For each possible next token \(y_t\), rearrange the definition of \(q(y_t\mid y_{&lt;t})\):</p>
+    <div class="equation">\[
+      \log\frac{p_K(y_t\mid y_{&lt;t})}{q(y_t\mid y_{&lt;t})}
+      =\log C(y_{&lt;t})-w\log\frac{p_K(y_t\mid y_{&lt;t})}{p_E(y_t\mid y_{&lt;t})}.
+    \]</div>
+    <p>Taking the expectation over \(y_t\sim p_K(\cdot\mid y_{&lt;t})\) yields Equation (6). For \(w\geq0\), both KL terms are nonnegative, so \(\log C(y_{&lt;t})\geq0\). This identity does not require small logit differences. \(\square\)</p>
+    <p>For the Taylor expansion, write the logit difference as \(\delta(y_t\mid y_{&lt;t})=z_K(y_t\mid y_{&lt;t})-z_E(y_t\mid y_{&lt;t})\). Define its log moment-generating function under the reference distribution:</p>
+    <div class="equation">\[
+      \psi(\alpha;y_{&lt;t})
+      =\log\sum_{y_t}p_E(y_t\mid y_{&lt;t})e^{\alpha\delta(y_t\mid y_{&lt;t})}.
+    \]</div>
+    <p>Softmax gives</p>
+    <div class="equation">\[
+      p_K(y_t\mid y_{&lt;t})
+      =p_E(y_t\mid y_{&lt;t})e^{\delta(y_t\mid y_{&lt;t})-\psi(1;y_{&lt;t})}.
+    \]</div>
+    <p>Substituting into the definition of \(C(y_{&lt;t})\), we obtain the exact expression</p>
     <div class="equation">\[
       \log C(y_{&lt;t})
-      =D_{\rm KL}(p_K\Vert q)+wD_{\rm KL}(p_K\Vert p_E).
-      \tag{7}
-    \]</div>
-    <p><strong>Proof of Equation (7).</strong> Suppress the prefix, let \(v\) index possible tokens, and use \(\log q=(1+w)\log p_K-w\log p_E-\log C\). Rearranging gives</p>
-    <div class="equation">\[
-      \log\frac{p_K(v)}{q(v)}
-      =\log C-w\log\frac{p_K(v)}{p_E(v)}.
-    \]</div>
-    <p>Taking the expectation over \(v\sim p_K\) yields Equation (7). For \(w\geq0\), both KL terms are nonnegative, so \(\log C(y_{&lt;t})\geq0\). This identity does not require small logit differences. \(\square\)</p>
-    <p>To find how quickly \(\log C(y_{&lt;t})\) approaches zero when the predictions are close, define the log moment-generating function of the logit difference under the reference distribution:</p>
-    <div class="equation">\[
-      \psi(\alpha)=\log\mathbb E_{v\sim p_E}e^{\alpha\delta(v)}.
-    \]</div>
-    <p>Softmax gives \(p_K(v)=p_E(v)e^{\delta(v)-\psi(1)}\). Substituting into the definition of \(C\), we obtain the exact expression</p>
-    <div class="equation">\[
-      \log C=\psi(1+w)-(1+w)\psi(1).
+      =\psi(1+w;y_{&lt;t})-(1+w)\psi(1;y_{&lt;t}).
     \]</div>
     <p>For \(\delta=\epsilon d\) with uniformly bounded \(d\), and bounded \(\alpha\), expand</p>
     <div class="equation">\[
-      \psi(\alpha)=\alpha\mu+
-      \frac{\alpha^2}{2}\sigma^2+O(\epsilon^3),
-      \quad \mu=\mathbb E_{p_E}\delta,
-      \quad \sigma^2=\operatorname{Var}_{p_E}(\delta).
+      \begin{aligned}
+        \psi(\alpha;y_{&lt;t})
+        &=\alpha\mathbb E_{p_E(\cdot\mid y_{&lt;t})}[\delta]\\
+        &\quad+\frac{\alpha^2}{2}\operatorname{Var}_{p_E(\cdot\mid y_{&lt;t})}(\delta)
+        +O(\epsilon^3).
+      \end{aligned}
     \]</div>
-    <p>The two linear terms are both \((1+w)\mu\). Their difference is zero; the remaining quadratic coefficient is</p>
+    <p>The expectation and variance are over next tokens \(y_t\) at the same prefix \(y_{&lt;t}\). Substitution cancels the linear terms and leaves</p>
     <div class="equation">\[
-      \frac{(1+w)^2-(1+w)}{2}\sigma^2
-      =\frac{w(1+w)}{2}\sigma^2.
+      \begin{aligned}
+        \log C(y_{&lt;t})
+        &=\frac{(1+w)^2-(1+w)}{2}\operatorname{Var}_{p_E(\cdot\mid y_{&lt;t})}(\delta)
+          +O(\epsilon^3)\\
+        &=\frac{w(1+w)}{2}\operatorname{Var}_{p_E(\cdot\mid y_{&lt;t})}(\delta)
+          +O(\epsilon^3).
+      \end{aligned}
     \]</div>
-    <p>Adding any constant to \(\delta\) adds a linear term to \(\psi\), which cancels in exactly the same way. The relevant assumption concerns variation across tokens, not the arbitrary origin of the logits.</p>
-    <p>For comparison, the change in log-odds relative to the final predictor is exactly</p>
-    <div class="equation">\[
-      \log\frac{q(v)}{q(u)}-\log\frac{p_K(v)}{p_K(u)}
-      =w\bigl(\delta(v)-\delta(u)\bigr).
-    \]</div>
-    <p>For fixed \(w\), this is \(O(\epsilon)\), whereas \(\log C\) begins at \(O(\epsilon^2)\).</p>
+    <p>This proves Equation (5). \(\square\)</p>
   </div>
 </details>
 
@@ -280,13 +270,13 @@ tags:
 <div class="equation">\[
   \left|\log\frac{Q_{\rm local}(y)}{Q_{\rm joint}(y)}\right|
   \leq T\eta.
-  \tag{8}
+  \tag{7}
 \]</div>
 
-<p>Equation (8) bounds the full-sequence error by \(T\eta\). Under the uniform small-difference assumption, \(\eta=O(\epsilon^2)\), so this error is \(O(T\epsilon^2)\): close predictions let the token-level rule approximate the guided joint distribution without summing over future sequences.</p>
+<p>Equation (7) bounds the full-sequence error by \(T\eta\). Under the uniform small-difference assumption, \(\eta=O(\epsilon^2)\), so this error is \(O(T\epsilon^2)\): close predictions let the token-level rule approximate the guided joint distribution without summing over future sequences.</p>
 
 <details class="proof" id="proof-sequence">
-  <summary>Prove the sequence bound, including the global normalizer</summary>
+  <summary>Proof of Equation (7)</summary>
   <div class="proof-body">
     <p>Set \(D(y)=\prod_t C(y_{&lt;t})\). Equation (3) gives \(ZQ_{\rm joint}(y)=Q_{\rm local}(y)D(y)\). Summing over sequences gives</p>
     <div class="equation">\[
@@ -298,14 +288,11 @@ tags:
       \log\frac{Q_{\rm local}(y)}{Q_{\rm joint}(y)}
       =\log Z-\log D(y).
     \]</div>
-    <p>Both terms lie in \([0,T\eta]\), establishing Equation (8). This argument retains the global normalizer rather than dropping it.</p>
-    <p>A finite, non-asymptotic bound is also available. Let \(R=\max_v\delta(v)-\min_v\delta(v)\). In the preceding proof, \(\psi''(\alpha)\) is the variance of \(\delta\) under an exponentially tilted distribution, and is at most \(R^2/4\). The remainder for linear interpolation of \(\psi\) at 0 and 1, evaluated at \(1+w\), gives</p>
-    <div class="equation">\[
-      0\leq\log C\leq\frac{w(1+w)}{8}R^2.
-    \]</div>
-    <p>Thus a uniform range bound \(R(y_{&lt;t})\leq R_*\) yields \(\eta=w(1+w)R_*^2/8\). This makes clear why average RMS alone cannot certify the sequence guarantee. The proof uses a fixed finite horizon and common positive support; unrestricted generation with EOS needs corresponding control of length and the global normalizer.</p>
+    <p>Both terms lie in \([0,T\eta]\), establishing Equation (7). This argument retains the global normalizer rather than dropping it.</p>
   </div>
 </details>
+
+<p>This is why similar loop outputs help: guidance changes token preferences at first order in \(\epsilon\), while the mismatch between token-level guidance and the guided joint distribution is \(O(T\epsilon^2)\) for a sequence of length \(T\).</p>
 
 <h2 id="measurements"><span class="section-number">04</span>Are predictions from different loops actually closer?</h2>
 
@@ -319,7 +306,7 @@ tags:
   \operatorname{RMS}_{\rm centered}(k,y_{&lt;t})
   =\sqrt{\frac{1}{V}\sum_{v=1}^V
     \bigl(\delta^{(k)}_v(y_{&lt;t})-\bar\delta^{(k)}(y_{&lt;t})\bigr)^2}.
-  \tag{9}
+  \tag{8}
 \]</div>
 
 <p>Intuitively, this measures <strong>how much the next-token scores change between an intermediate depth and the final depth</strong>. It is the standard deviation of those score changes across the vocabulary. A smaller value means the predictions vary less as the model performs more loops or layers.</p>
@@ -340,31 +327,10 @@ tags:
 
 <figure class="wide measurement-figure" id="readout-comparison">
   <img src="{{ '/blog/guidance-in-looped-models/logit-gaps.svg' | relative_url }}" width="1440" height="660" loading="eager" alt="Logit changes from an intermediate loop or layer to the final depth. Huginn and Ouro have smaller changes than Qwen and Pythia, both in centered RMS and after adjusting for final-logit scale.">
-  <figcaption><strong>How much do predictions change with more computation?</strong> Left: the centered RMS in Equation (9). Right: the same gap divided by the final logits' centered RMS at each prefix, then averaged, to account for different logit scales. The horizontal axis changes the intermediate loop or layer; the final depth stays fixed. Lower values mean closer intermediate and final predictions.</figcaption>
+  <figcaption><strong>How much do predictions change with more computation?</strong> Left: the centered RMS in Equation (8). Right: the same gap divided by the final logits' centered RMS at each prefix, then averaged, to account for different logit scales. The horizontal axis changes the intermediate loop or layer; the final depth stays fixed. Lower values mean closer intermediate and final predictions.</figcaption>
 </figure>
 
 <p><strong>The looped models' mean gaps are 2.8–14.1 times smaller</strong> across all twelve comparisons. Every paired 95% bootstrap interval for the ratio lies below one. The ordering also holds after scale normalization and when using only question prefixes, before any answer text.</p>
-
-<details class="proof" id="measurement-protocol">
-  <summary>Measurement details</summary>
-  <div class="proof-body">
-    <p>The models are frozen base checkpoints. Inputs use a common plain-text, eight-shot Q/A format. Answer-prefix positions come from cached Huginn-32 continuations, with no filtering for answer correctness. We selected shared character boundaries that round-trip exactly through all four tokenizers, including the prompt boundary. This matches text, not token IDs across different vocabularies.</p>
-    <p>Intermediate hidden states are converted into logits using each architecture's existing output computation, including Huginn's final coda layers, normalization, and vocabulary head. We did not fit an additional prediction head. Native forwards use BF16; full-vocabulary statistics use float64 at temperature one. A native-forward check and a future-token control passed at all 84 audited model/depth settings. An independent audit recomputed 28,672 depth-position records.</p>
-    <p>Intervals resample the 128 questions, retaining each question's eight positions together; paired comparisons resample the same questions for both models. We used 5,000 bootstrap draws. These are individual intervals over the sampled questions, not simultaneous intervals or estimates of variation across training seeds.</p>
-    <p>The twelve comparisons pair each looped model with each ordinary Transformer at \(k/K=25\%,50\%,75\%\). At half depth, Huginn's gap is 0.268 times Pythia's, with a 95% interval of [0.261, 0.276]; Ouro's is 0.203 times Pythia's, with interval [0.199, 0.209].</p>
-    <p>The normalized gap divides by the final logits' centered RMS at each position before averaging. Centered RMS weights vocabulary entries uniformly; the variance in Equation (6) weights them by the reference probabilities \(p_E\). The plot is a direct diagnostic of logit similarity. Its vertical axes start at zero, and lines connect measured depths. At \(k=K\), the gap is zero by definition, so that endpoint is omitted.</p>
-    <p>Depth fractions match relative progress through each model, rather than FLOPs. The checkpoints differ in architecture, training, vocabulary, and size; this comparison measures their predictions using their existing output computations.</p>
-    <p>LoopCD's first-loop reference deserves separate care: it is 1/32 of the deployed depth for Huginn but 1/4 for Ouro. We therefore do not present “first versus final” as a matched-depth comparison. The source report includes that diagnostic separately.</p>
-  </div>
-</details>
-
-<details class="proof" id="measurement-taylor">
-  <summary>How accurate is the quadratic approximation itself?</summary>
-  <div class="proof-body">
-    <p>We also computed the exact \(\log C\) and its quadratic approximation. At a quarter depth with \(w=0.5\), the median relative error across the 1,024 positions is 76.9% for Huginn and 75.3% for Ouro, versus 29.2% for Qwen and 27.6% for Pythia. Here relative error means \(|\text{quadratic}-\log C|/\max(\log C,10^{-12})\); the floor is inactive at these positions. The looped models have smaller absolute normalizers in this comparison, but not smaller relative Taylor error.</p>
-    <p>Even at three-quarter depth, the largest observed absolute centered logit difference is 5.60 for Huginn and 6.44 for Ouro. A small vocabulary-average gap can coexist with larger differences on particular tokens. Equation (8) uses a uniform bound over prefixes, whereas the plot summarizes average logit differences.</p>
-  </div>
-</details>
 
 <div class="key-result" id="measurement-takeaway">
   <p><strong>The smaller logit gaps support the proposed mechanism: loop predictions stay closer, making smaller normalization errors plausible.</strong> Under the small-difference assumption, guidance changes token preferences at first order while the normalization error grows only at second order. This gives looped models a natural route toward effective token-level guidance that stays close to the desired joint distribution.</p>
