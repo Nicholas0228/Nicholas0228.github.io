@@ -122,22 +122,8 @@ tags:
     \end{aligned}
   \]</div>
   <p class="toy-takeaway" aria-live="polite" aria-atomic="true"><strong><span id="toy-gap-value">12.1</span> <span id="toy-gap-label">percentage-point gap.</span></strong> <span id="toy-gap-explanation">Even the first-token probabilities differ.</span></p>
-  <details class="toy-details">
-    <summary>Show the probabilities and normalizers</summary>
-    <p>Both predictors start with a 50–50 choice of A or B. After B, the stronger predictor uses (<span id="strong-b1">0.90</span>, <span id="strong-b2">0.10</span>); the reference uses (0.50, 0.50).</p>
-    <p>The normalizers measure the total guided weight of the next-token options. Token-level guidance divides by each prefix's normalizer separately. The guided joint distribution retains their relative weights when comparing full sequences, so a larger normalizer after B makes B more likely from the start.</p>
-    <div class="toy-stats"><span>Normalizer after A: <strong>1</strong></span><span>Normalizer after B: <output id="cb-value">1.640</output></span></div>
-    <p class="toy-normalizer-rule">Here \(C(A)=1\), so the joint target assigns probabilities to A and B in the ratio \(1:C(B)\).</p>
-    <div class="table-scroll"><table><caption>Probabilities of the four possible sequences</caption><thead><tr><th scope="col">Sequence</th><th scope="col">Strong</th><th scope="col">Reference</th><th scope="col">Token-level<br>\(Q_{\rm local}(y)\)</th><th scope="col">Joint target<br>\(Q_{\rm joint}(y)\)</th></tr></thead><tbody>
-      <tr><th scope="row">A1</th><td id="toy-strong-0">0.250</td><td id="toy-reference-0">0.250</td><td id="toy-local-0">0.250</td><td id="toy-joint-0">0.189</td></tr>
-      <tr><th scope="row">A2</th><td id="toy-strong-1">0.250</td><td id="toy-reference-1">0.250</td><td id="toy-local-1">0.250</td><td id="toy-joint-1">0.189</td></tr>
-      <tr><th scope="row">B1</th><td id="toy-strong-2">0.450</td><td id="toy-reference-2">0.250</td><td id="toy-local-2">0.494</td><td id="toy-joint-2">0.614</td></tr>
-      <tr><th scope="row">B2</th><td id="toy-strong-3">0.050</td><td id="toy-reference-3">0.250</td><td id="toy-local-3">0.006</td><td id="toy-joint-3">0.008</td></tr>
-    </tbody></table></div>
-    <p><strong>Sequence total variation: <output id="tv-value">12.12%</output>.</strong> This measures the difference across all four sequences: half the sum of their absolute probability differences. It is zero when the distributions agree.</p>
-  </details>
   <figcaption>An exact four-sequence toy model. Setting either slider to zero makes the two distributions agree.</figcaption>
-  <noscript><p class="table-note">The table shows w = 1 and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
+  <noscript><p class="table-note">The example shows w = 1 and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
 </figure>
 
 <h2 id="loops"><span class="section-number">03</span>Loooop</h2>

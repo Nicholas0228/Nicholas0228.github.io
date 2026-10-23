@@ -28,8 +28,6 @@
     const w = Number(strength.value), d = Number(difference.value), result = compute(w, d);
     document.getElementById('strength-value').textContent = w.toFixed(2);
     document.getElementById('difference-value').textContent = d.toFixed(2);
-    document.getElementById('strong-b1').textContent = (0.5 + d).toFixed(2);
-    document.getElementById('strong-b2').textContent = (0.5 - d).toFixed(2);
     document.getElementById('joint-b-value').textContent = (100 * result.jointB).toFixed(1) + '%';
     document.getElementById('joint-b-bar').style.width = (100 * result.jointB) + '%';
     const agree = w === 0 || d === 0;
@@ -40,13 +38,6 @@
       ? 'The two distributions agree.'
       : 'Even the first-token probabilities differ.';
     toy.classList.toggle('toy-agree', agree);
-    document.getElementById('cb-value').textContent = result.cB.toFixed(3);
-    document.getElementById('tv-value').textContent = (100 * result.tv).toFixed(2) + '%';
-    for (const name of ['strong', 'reference', 'local', 'joint']) {
-      result[name].forEach((value, index) => {
-        document.getElementById(`toy-${name}-${index}`).textContent = value > 0 && value < 0.0005 ? '<0.001' : value.toFixed(3);
-      });
-    }
   }
   strength.addEventListener('input', update);
   difference.addEventListener('input', update);
