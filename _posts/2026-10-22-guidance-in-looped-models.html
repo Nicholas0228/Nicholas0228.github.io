@@ -161,6 +161,11 @@ tags:
 
 <figure class="loop-architecture" id="loop-architecture" aria-label="Repeated applications of the same block f refine the hidden state from loop E to final loop K. These states produce early and final next-token logits.">
   <div class="architecture-label">Same block, repeated</div>
+<figure class="visual-interlude" id="loop-interlude">
+  <img src="{{ '/blog/guidance-in-looped-models/images/spiral-staircase.jpg' | relative_url }}" width="1280" height="854" loading="lazy" decoding="async" alt="Looking down a spiral staircase, with repeating white curves and yellow-edged steps.">
+  <figcaption>Photo: <a href="https://commons.wikimedia.org/wiki/File:Spiral_staircase_(Unsplash).jpg">CHUTTERSNAP</a> &middot; <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a></figcaption>
+</figure>
+
   <div class="trajectory">
     <div class="state state-early">\(h_E\)</div><span class="arrow" aria-hidden="true">&rarr;</span>
     <div class="state">\(f(h_E)\)</div><span class="arrow" aria-hidden="true">&rarr;</span>
@@ -321,6 +326,11 @@ tags:
       <tr><th scope="row">Huginn-0125</th><td>Loops 8, 16, 24</td><td>32 loops</td></tr>
       <tr><th scope="row">Ouro-2.6B</th><td>Loops 1, 2, 3</td><td>4 loops</td></tr>
       <tr><th scope="row">Qwen2.5-3B</th><td>Layers 9, 18, 27</td><td>36 layers</td></tr>
+<figure class="visual-interlude visual-interlude-small" id="paper-interlude">
+  <img src="{{ '/blog/guidance-in-looped-models/images/paper-spiral.jpg' | relative_url }}" width="1400" height="788" loading="lazy" decoding="async" alt="A white strip of paper curls into a loose spiral, casting soft shadows.">
+  <figcaption>Photo: <a href="https://www.pexels.com/photo/white-top-swirl-texture-of-paper-7233372/">Artem Podrez / Pexels</a></figcaption>
+</figure>
+
       <tr><th scope="row">Pythia-2.8B</th><td>Layers 8, 16, 24</td><td>32 layers</td></tr>
     </tbody>
   </table>
