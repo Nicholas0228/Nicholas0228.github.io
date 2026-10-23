@@ -51,10 +51,8 @@ figure{margin:32px 0}
 figure img{display:block;width:100%;height:auto;background:white}
 figcaption{font:13px/1.65 var(--sans);color:var(--muted);margin-top:14px}
 figcaption strong{color:var(--ink)}
-.visual-interlude{width:min(100%,600px);margin:48px auto 40px}
-.visual-interlude-small{max-width:520px}
-.visual-interlude figcaption{font-size:11px;text-align:right;margin-top:8px}
-.visual-interlude figcaption a{color:inherit;text-decoration-color:var(--line)}
+.visual-interlude{width:100%;margin:40px 0}
+.visual-interlude img{width:100%;height:auto;aspect-ratio:16/5;object-fit:cover;object-position:center}
 .measurement-figure figcaption{max-width:750px;margin:16px auto 0}
 .figure-links{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:10px;font:12px/1.5 var(--sans)}
 .table-scroll{overflow:auto;margin:26px 0}

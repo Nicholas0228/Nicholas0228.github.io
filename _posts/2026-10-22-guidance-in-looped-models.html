@@ -29,6 +29,10 @@ tags:
   <a href="#diffusion">Diffusion</a><a href="#sequences">Tokens vs. sequences</a><a href="#loops">Loooop</a><a href="#cancellation">Why loops help</a><a href="#measurements">The measurements</a><a href="#connections">Loops and diffusion</a>
 </nav>
 
+<figure class="visual-interlude" id="diffusion-interlude">
+  <img src="{{ '/blog/guidance-in-looped-models/images/water-reflections.jpg' | relative_url }}" width="1600" height="1067" loading="lazy" decoding="async" alt="Sunlight makes soft, overlapping patterns on blue water.">
+</figure>
+
 <h2 id="diffusion"><span class="section-number">01</span>Why diffusion guidance needs no normalizer</h2>
 
 <p>Start with a conditional density \(p(x\mid c)\), where \(c\) might be a text prompt. Suppose we want to favor samples that are especially characteristic of that condition. One way to express this preference is to tilt the density:</p>
@@ -52,6 +56,10 @@ tags:
 \]</div>
 
 <p>This is the score combination behind classifier-free guidance<sup class="citation" id="cite-cfg-2"><a href="#ref-cfg" role="doc-noteref" aria-label="Reference 1: Jonathan Ho and Tim Salimans, Classifier-Free Diffusion Guidance">1</a></sup>. <strong>In this score formulation, the normalizer vanishes.</strong><sup class="citation" id="fnref-cfg-scope"><a href="#fn-cfg-scope" role="doc-noteref" aria-label="Footnote: scope of the CFG score identity">*</a></sup></p>
+
+<figure class="visual-interlude" id="sequence-interlude">
+  <img src="{{ '/blog/guidance-in-looped-models/images/sunlit-arches.jpg' | relative_url }}" width="1600" height="1067" loading="lazy" decoding="async" alt="Warm sunlight falls through a row of stone arches and windows.">
+</figure>
 
 <h2 id="sequences"><span class="section-number">02</span>Token-level guidance and the joint distribution</h2>
 
@@ -155,17 +163,16 @@ tags:
   <noscript><p class="table-note">The table shows w = 1 and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
 </figure>
 
+<figure class="visual-interlude" id="loop-interlude">
+  <img src="{{ '/blog/guidance-in-looped-models/images/spiral-staircase.jpg' | relative_url }}" width="1280" height="854" loading="lazy" decoding="async" alt="Looking down a spiral staircase, with repeating white curves and yellow-edged steps.">
+</figure>
+
 <h2 id="loops"><span class="section-number">03</span>Loooop</h2>
 
 <p>A looped Transformer applies <strong>the same block of layers repeatedly</strong> before predicting the next token. Huginn<sup class="citation" id="cite-huginn-1"><a href="#ref-huginn" role="doc-noteref" aria-label="Reference 11: Jonas Geiping et al., Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach">11</a></sup> and Ouro<sup class="citation" id="cite-ouro-1"><a href="#ref-ouro" role="doc-noteref" aria-label="Reference 12: Rui-Jie Zhu et al., Scaling Latent Reasoning via Looped Language Models">12</a></sup> implement this idea in different ways. Each completed loop gives a hidden state that can be converted into next-token logits (unnormalized token scores): \(z_E\) after an earlier loop \(E\), and \(z_K\) after the final loop \(K\).</p>
 
 <figure class="loop-architecture" id="loop-architecture" aria-label="Repeated applications of the same block f refine the hidden state from loop E to final loop K. These states produce early and final next-token logits.">
   <div class="architecture-label">Same block, repeated</div>
-<figure class="visual-interlude" id="loop-interlude">
-  <img src="{{ '/blog/guidance-in-looped-models/images/spiral-staircase.jpg' | relative_url }}" width="1280" height="854" loading="lazy" decoding="async" alt="Looking down a spiral staircase, with repeating white curves and yellow-edged steps.">
-  <figcaption>Photo: <a href="https://commons.wikimedia.org/wiki/File:Spiral_staircase_(Unsplash).jpg">CHUTTERSNAP</a> &middot; <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a></figcaption>
-</figure>
-
   <div class="trajectory">
     <div class="state state-early">\(h_E\)</div><span class="arrow" aria-hidden="true">&rarr;</span>
     <div class="state">\(f(h_E)\)</div><span class="arrow" aria-hidden="true">&rarr;</span>
@@ -300,6 +307,10 @@ tags:
   </div>
 </details>
 
+<figure class="visual-interlude" id="paper-interlude">
+  <img src="{{ '/blog/guidance-in-looped-models/images/paper-spiral.jpg' | relative_url }}" width="1400" height="788" loading="lazy" decoding="async" alt="A white strip of paper curls into a loose spiral, casting soft shadows.">
+</figure>
+
 <h2 id="measurements"><span class="section-number">04</span>Are predictions from different loops actually closer?</h2>
 
 <p>We compared two looped models, Huginn-0125 and Ouro-2.6B, with two ordinary Transformers, Qwen2.5-3B and Pythia-2.8B. Each model saw the same 1,024 text prefixes: eight positions on each of 128 GSM8K development questions. At each prefix, we compared the model's next-token logits partway through its computation with its own final logits.</p>
@@ -326,11 +337,6 @@ tags:
       <tr><th scope="row">Huginn-0125</th><td>Loops 8, 16, 24</td><td>32 loops</td></tr>
       <tr><th scope="row">Ouro-2.6B</th><td>Loops 1, 2, 3</td><td>4 loops</td></tr>
       <tr><th scope="row">Qwen2.5-3B</th><td>Layers 9, 18, 27</td><td>36 layers</td></tr>
-<figure class="visual-interlude visual-interlude-small" id="paper-interlude">
-  <img src="{{ '/blog/guidance-in-looped-models/images/paper-spiral.jpg' | relative_url }}" width="1400" height="788" loading="lazy" decoding="async" alt="A white strip of paper curls into a loose spiral, casting soft shadows.">
-  <figcaption>Photo: <a href="https://www.pexels.com/photo/white-top-swirl-texture-of-paper-7233372/">Artem Podrez / Pexels</a></figcaption>
-</figure>
-
       <tr><th scope="row">Pythia-2.8B</th><td>Layers 8, 16, 24</td><td>32 layers</td></tr>
     </tbody>
   </table>
