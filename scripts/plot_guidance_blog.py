@@ -13,7 +13,7 @@ def main():
     assets = Path(__file__).resolve().parents[1] / "blog/guidance-in-looped-models"
     data = json.loads((assets / "plot-data.json").read_text())
     plt.rcParams.update({
-        "font.family": "DejaVu Sans", "font.size": 12,
+        "font.family": "DejaVu Sans", "font.size": 16,
         "axes.spines.top": False, "axes.spines.right": False,
         "axes.edgecolor": "#c6cbc9", "text.color": "#282b2d",
         "axes.labelcolor": "#42484c", "xtick.color": "#535b60",
@@ -21,11 +21,11 @@ def main():
         "pdf.fonttype": 42,
         "savefig.facecolor": "#fcfbf8", "figure.facecolor": "#fcfbf8",
     })
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
     colors = {"huginn": "#207a65", "ouro": "#225b87", "qwen": "#b4773a", "pythia": "#956b8b"}
     markers = {"huginn": "o", "ouro": "s", "qwen": "^", "pythia": "D"}
     metrics = [("centered_logit_rms", "A  Change in next-token scores", "Logit change (centered RMS)", [0, 1, 2, 3, 4, 5]),
-               ("relative_centered_rms", "B  Same change, adjusted for scale", "Change / final-logit centered RMS", [0, .5, 1, 1.5, 2])]
+               ("relative_centered_rms", "B  Same change, adjusted for scale", "Change / final-logit\ncentered RMS", [0, .5, 1, 1.5, 2])]
     for ax, (metric, title, ylabel, ticks) in zip(axes, metrics):
         ax.set_facecolor("#fcfbf8")
         for m in data["models"]:
@@ -37,8 +37,8 @@ def main():
             ax.fill_between(x, low, high, color=color, alpha=.16, linewidth=0)
             ax.plot(x, mean, color=color, lw=2, marker=markers[m["key"]], ms=5,
                     ls="-" if m["kind"] == "loop" else "--", label=m["label"])
-        ax.set_title(title, loc="left", fontsize=13, pad=20, weight="medium")
-        ax.set_xlabel("Intermediate loop / layer (% of final depth)", labelpad=12, fontsize=10)
+        ax.set_title(title, loc="left", fontsize=18, pad=20, weight="medium")
+        ax.set_xlabel("Intermediate loop / layer\n(% of final depth)", labelpad=12, fontsize=14)
         ax.set_ylabel(ylabel, labelpad=9)
         highest_ci = max(d[metric]["question_bootstrap_95ci"][1]
                          for m in data["models"] for d in m["depths"]
@@ -53,9 +53,9 @@ def main():
         ax.set_axisbelow(True)
         ax.tick_params(length=3, pad=7)
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(.51, .035), ncol=2,
-               frameon=False, fontsize=11, columnspacing=3.5, handlelength=2.6)
-    fig.subplots_adjust(left=.075, right=.98, top=.88, bottom=.26, wspace=.32)
+    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(.52, .02), ncol=2,
+               frameon=False, fontsize=15, columnspacing=2.5, handlelength=2.6)
+    fig.subplots_adjust(left=.09, right=.96, top=.86, bottom=.30, wspace=.36)
     for ext in ["svg", "pdf", "png"]:
         target = assets / f"logit-gaps.{ext}"
         metadata = {"Date": None} if ext == "svg" else {"CreationDate": None, "ModDate": None} if ext == "pdf" else None

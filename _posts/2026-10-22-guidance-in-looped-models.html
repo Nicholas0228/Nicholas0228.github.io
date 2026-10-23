@@ -323,8 +323,8 @@ tags:
   </table>
 </div>
 
-<figure class="wide measurement-figure" id="readout-comparison">
-  <img src="{{ '/blog/guidance-in-looped-models/logit-gaps.svg' | relative_url }}" width="1440" height="660" loading="eager" alt="Logit changes from an intermediate loop or layer to the final depth. Huginn and Ouro have smaller changes than Qwen and Pythia, both in centered RMS and after adjusting for final-logit scale.">
+<figure class="measurement-figure" id="readout-comparison">
+  <img src="{{ '/blog/guidance-in-looped-models/logit-gaps.svg' | relative_url }}" width="1440" height="720" loading="eager" alt="Logit changes from an intermediate loop or layer to the final depth. Huginn and Ouro have smaller changes than Qwen and Pythia, both in centered RMS and after adjusting for final-logit scale.">
   <figcaption><strong>How much do predictions change with more computation?</strong> Left: the centered RMS in Equation (8). Right: the same gap divided by the final logits' centered RMS at each prefix, then averaged, to account for different logit scales. The horizontal axis changes the intermediate loop or layer; the final depth stays fixed. Lower values mean closer intermediate and final predictions.</figcaption>
 </figure>
 
