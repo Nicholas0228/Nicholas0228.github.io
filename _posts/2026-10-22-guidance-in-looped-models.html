@@ -40,36 +40,18 @@ tags:
   \tag{1}
 \]</div>
 
-<p>The ratio \(p(x\mid c)/p(x)\) rewards samples that the condition helps explain. At \(w=0\), we recover ordinary conditional generation. Increasing \(w\) strengthens that preference. The denominator \(Z_w(c)\) makes the density integrate to one.</p>
+<p>The ratio \(p(x\mid c)/p(x)\) favors samples that are more likely under the prompt than without conditioning. At \(w=0\), we recover ordinary conditional generation. Increasing \(w\) strengthens that preference. The normalizer \(Z_w(c)\) makes the density integrate to one.</p>
 
-<p>Diffusion uses the corresponding construction at each noise level \(t\). With \(x_t\) denoting the whole noisy sample, take the log-gradient of the tilted density:</p>
+<p>Diffusion models use the score, the gradient of a log density, to guide denoising. As Sander explains, <strong>we can compute the score without knowing the normalizer</strong>, as \(Z\) does not depend on \(x\)<sup class="citation" id="cite-sander-1"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup>. Guidance can therefore be written as a combination of the conditional and unconditional scores:</p>
 
 <div class="equation">\[
-  \nabla_{x_t}\log\widetilde p_{t,w}(x_t\mid c)
-  =(1+w)\nabla_{x_t}\log p_t(x_t\mid c)
-  -w\nabla_{x_t}\log p_t(x_t).
+  \nabla_x\log\widetilde p_w(x\mid c)
+  =(1+w)\nabla_x\log p(x\mid c)
+  -w\nabla_x\log p(x).
   \tag{2}
 \]</div>
 
-<p>This is the score combination behind classifier-free guidance<sup class="citation" id="cite-cfg-2"><a href="#ref-cfg" role="doc-noteref" aria-label="Reference 1: Jonathan Ho and Tim Salimans, Classifier-Free Diffusion Guidance">1</a></sup>. The normalizer depends on the condition and noise level, but not on the sample coordinates \(x_t\), so its gradient is zero. <strong>We do not approximate or discard the normalizer: differentiation removes it exactly.</strong> This lets us compute the guided score without evaluating the integral defining \(Z_{t,w}\).</p>
-
-<details class="proof" id="proof-diffusion">
-  <summary>Show the derivation and its scope</summary>
-  <div class="proof-body">
-    <p>At a fixed noise level, assume differentiable positive densities and a finite normalizer. Taking logarithms of the noisy version of Equation (1) gives</p>
-    <div class="equation">\[
-      \log\widetilde p_{t,w}
-      =(1+w)\log p_t(x_t\mid c)-w\log p_t(x_t)-\log Z_{t,w}(c).
-    \]</div>
-    <p>Differentiate with respect to \(x_t\). Since \(Z_{t,w}(c)\) is constant in that variable, the last term disappears, giving Equation (2). Bayes' rule also gives</p>
-    <div class="equation">\[
-      \frac{p_t(x_t\mid c)}{p_t(x_t)}
-      =\frac{p_t(c\mid x_t)}{p(c)}.
-    \]</div>
-    <p>Thus the same tilt can be written as \(p_t(x_t\mid c)\,p_t(c\mid x_t)^w\), up to a factor depending only on \(c\). With exact scores, this is an exact identity at that noise level.</p>
-    <p><strong>Scope of the identity.</strong> The normalizer cancels at each fixed noise level. This identity alone does not guarantee that the full sampling process produces the target distribution in Equation (1). Reweighting a distribution and then adding noise generally differs from adding noise first and then reweighting. Sander noted this limitation in his correction<sup class="citation" id="cite-sander-1"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup>; Bradley and Nakkiran<sup class="citation" id="cite-predictor-corrector-1"><a href="#ref-predictor-corrector" role="doc-noteref" aria-label="Reference 6: Arwen Bradley and Preetum Nakkiran, Classifier-Free Guidance is a Predictor-Corrector">6</a></sup> and Chidambaram et al.<sup class="citation" id="cite-fine-grained-1"><a href="#ref-fine-grained" role="doc-noteref" aria-label="Reference 7: Muthu Chidambaram et al., What does guidance do? A fine-grained analysis in a simple setting">7</a></sup> give formal counterexamples. We use the score identity at a fixed noise level here.</p>
-  </div>
-</details>
+<p>This is the score combination behind classifier-free guidance<sup class="citation" id="cite-cfg-2"><a href="#ref-cfg" role="doc-noteref" aria-label="Reference 1: Jonathan Ho and Tim Salimans, Classifier-Free Diffusion Guidance">1</a></sup>. <strong>In this score formulation, the normalizer vanishes.</strong><sup class="citation" id="fnref-cfg-scope"><a href="#fn-cfg-scope" role="doc-noteref" aria-label="Footnote: scope of the CFG score identity">*</a></sup></p>
 
 <h2 id="sequences"><span class="section-number">02</span>Token-level guidance and the joint distribution</h2>
 
@@ -81,7 +63,7 @@ tags:
 
 <blockquote>
   <p>“my hunch is that diffusion guidance works so well precisely because we are able to apply it to the joint distribution”</p>
-  <footer>Sander Dieleman, Guidance: a cheat code for diffusion models<sup class="citation" id="cite-sander-2"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup> (2022)</footer>
+  <footer>Sander Dieleman, Guidance: a cheat code for diffusion models<sup class="citation" id="cite-sander-3"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup> (2022)</footer>
 </blockquote>
 
 <p>Let \(p_K\) be the predictor we want to strengthen and \(p_E\) its reference. For a sequence \(y=(y_1,\ldots,y_T)\) of fixed length \(T\), \(y_t\) is the next token and \(y_{&lt;t}=(y_1,\ldots,y_{t-1})\) is its prefix. Assuming positive token probabilities and leaving the fixed prompt conditioning implicit, token-level guidance gives</p>
@@ -92,9 +74,9 @@ tags:
   \qquad C(y_{&lt;t})=\sum_{y_t}\frac{p_K(y_t\mid y_{&lt;t})^{1+w}}{p_E(y_t\mid y_{&lt;t})^w}.
 \]</div>
 
-<p>Here \(C(y_{&lt;t})\) is the normalizer; the sum runs over all possible next tokens.</p>
+<p>Here \(C(y_{&lt;t})\) is the local normalizer; the sum runs over all possible next tokens.</p>
 
-<p>Write \(p_K(y)\) and \(p_E(y)\) for each model's sequence probability, obtained by multiplying its token probabilities. The guided joint distribution normalizes once with \(Z\); token-level guidance instead multiplies the locally normalized probabilities \(q\):</p>
+<p>Write \(p_K(y)\) and \(p_E(y)\) for each model's sequence probability, obtained by multiplying its token probabilities. The guided joint distribution uses a single global normalizer \(Z\); token-level guidance instead multiplies the locally normalized probabilities \(q\):</p>
 
 <div class="equation">\[
   \begin{aligned}
@@ -109,7 +91,7 @@ tags:
   \tag{3}
 \]</div>
 
-<p>The numerators are identical. The difference is normalization: \(Z\) is shared by every sequence, whereas the product of local normalizers depends on the sequence's prefixes \(y_{&lt;t}\). <strong>This is the normalization mismatch.</strong></p>
+<p>The numerators are identical, but the normalizers differ: \(Z\) is shared by every sequence, whereas the product of local normalizers depends on the sequence's prefixes \(y_{&lt;t}\). <strong>This is the normalization mismatch.</strong></p>
 
 <details class="proof" id="proof-lookahead">
   <summary>How would the guided joint distribution choose each token?</summary>
@@ -309,7 +291,7 @@ tags:
     <div class="equation">\[
       0\leq\log C\leq\frac{w(1+w)}{8}R^2.
     \]</div>
-    <p>Thus a uniform range bound \(R(y_{&lt;t})\leq R_*\) yields \(\eta=w(1+w)R_*^2/8\). This makes clear why average RMS alone cannot certify the sequence guarantee. The proof uses a fixed finite horizon and common positive support; unrestricted generation with EOS needs corresponding control of length and the partition function.</p>
+    <p>Thus a uniform range bound \(R(y_{&lt;t})\leq R_*\) yields \(\eta=w(1+w)R_*^2/8\). This makes clear why average RMS alone cannot certify the sequence guarantee. The proof uses a fixed finite horizon and common positive support; unrestricted generation with EOS needs corresponding control of length and the global normalizer.</p>
   </div>
 </details>
 
@@ -382,7 +364,9 @@ tags:
 
 <p>These connections are now explicit in the methods themselves. Time-Modulated Looped Transformers<sup class="citation" id="cite-tmlt-1"><a href="#ref-tmlt" role="doc-noteref" aria-label="Reference 15: Kevin Xu and Issei Sato, On Expressive Power of Looped Transformers">15</a></sup> borrow diffusion-style timestep conditioning, and LoopFormer<sup class="citation" id="cite-loopformer-1"><a href="#ref-loopformer" role="doc-noteref" aria-label="Reference 16: Ahmadreza Jeddi, Marco Ciccone, and Babak Taati, LoopFormer">16</a></sup> adds step-size conditioning and shortcut consistency. Denoising Recursion Models<sup class="citation" id="cite-denoising-recursion-1"><a href="#ref-denoising-recursion" role="doc-noteref" aria-label="Reference 17: Chris Cameron et al., One Step Forward and K Steps Back">17</a></sup> learn multi-step correction of corrupted solutions, while <em>Thinking with Looped Flows</em><sup class="citation" id="cite-looped-flows-1"><a href="#ref-looped-flows" role="doc-noteref" aria-label="Reference 18: Ayhan Suleymanzade et al., Thinking with Looped Flows">18</a></sup> couples recurrent states to a learned denoising flow. In the other direction, Looped Diffusion Language Models<sup class="citation" id="cite-loopmdm-1"><a href="#ref-loopmdm" role="doc-noteref" aria-label="Reference 19: Sanghyun Lee et al., Looped Diffusion Language Models">19</a></sup> and Looped-DiT<sup class="citation" id="cite-looped-dit-1"><a href="#ref-looped-dit" role="doc-noteref" aria-label="Reference 20: Yong Xien Chng et al., Looped Diffusion Transformer">20</a></sup> repeat Transformer blocks inside diffusion models, allowing compute to grow through loop depth as well as sampling steps.</p>
 
-<p>Test-time-scaling work suggests a sharper perspective: <strong>capability depends on how computation is organized, not only on how much is spent.</strong><sup class="citation" id="cite-test-time-compute-1"><a href="#ref-test-time-compute" role="doc-noteref" aria-label="Reference 21: Edward Beeching, Lewis Tunstall, and Sasha Rush, Scaling test-time compute with open models">21</a></sup> Weng's discussion of reasoning in continuous states<sup class="citation" id="cite-why-we-think-1"><a href="#ref-why-we-think" role="doc-noteref" aria-label="Reference 22: Lilian Weng, Why We Think">22</a></sup> also makes clear that extra computation need not mean more text. For loops and diffusion, this creates concrete choices: refine a state further, change the step size, or steer a prediction with guidance. Our view is that these choices belong to the model's design, not just its deployment. <strong>What scales is the model together with its inference algorithm.</strong></p>
+<p>Test-time-scaling work suggests a sharper perspective: <strong>capability depends on how computation is organized, not only on how much is spent.</strong><sup class="citation" id="cite-test-time-compute-1"><a href="#ref-test-time-compute" role="doc-noteref" aria-label="Reference 21: Edward Beeching, Lewis Tunstall, and Sasha Rush, Scaling test-time compute with open models">21</a></sup> Both looped models and diffusion offer test-time scaling through iterative refinement, spending extra computation on hidden-state updates or sampling steps. Their connection is not just that they repeat computation, but that the inference algorithm determines how those updates are used: how many to take, how large they should be, and how guidance steers them. <strong>What scales is the model together with its inference algorithm.</strong></p>
+
+<p class="endnote" id="fn-cfg-scope" role="doc-footnote"><sup>*</sup> It is worth noting that sampling with Equation (2) is not generally equivalent to sampling from the clean-data distribution in Equation (1), as reweighting noisy distributions differs from adding noise to the reweighted clean-data distribution. The noise-level dependence in Equation (2) is left implicit. Sander noted this limitation in his correction<sup class="citation" id="cite-sander-2"><a href="#ref-sander" role="doc-noteref" aria-label="Reference 5: Sander Dieleman, Guidance: a cheat code for diffusion models">5</a></sup>; Bradley and Nakkiran<sup class="citation" id="cite-predictor-corrector-1"><a href="#ref-predictor-corrector" role="doc-noteref" aria-label="Reference 6: Arwen Bradley and Preetum Nakkiran, Classifier-Free Guidance is a Predictor-Corrector">6</a></sup> and Chidambaram et al.<sup class="citation" id="cite-fine-grained-1"><a href="#ref-fine-grained" role="doc-noteref" aria-label="Reference 7: Muthu Chidambaram et al., What does guidance do? A fine-grained analysis in a simple setting">7</a></sup> give formal counterexamples. For the discussion below, we use Equation (2) as the practical score-level formulation of CFG. <a class="citation-back" href="#fnref-cfg-scope" role="doc-backlink" aria-label="Back to the CFG score footnote marker">&#8617;</a></p>
 
 <h3 id="references">References</h3>
 <ol class="references">
@@ -390,7 +374,7 @@ tags:
   <li id="ref-sd3">Patrick Esser et al. <a href="https://arxiv.org/abs/2403.03206"><cite>Scaling Rectified Flow Transformers for High-Resolution Image Synthesis</cite></a>. ICML, 2024. <a class="citation-back" href="#cite-sd3-1" role="doc-backlink" aria-label="Back to citation 1 of reference 2">↩</a></li>
   <li id="ref-wan">Wan Team. <a href="https://arxiv.org/abs/2503.20314"><cite>Wan: Open and Advanced Large-Scale Video Generative Models</cite></a>. arXiv, 2025. <a class="citation-back" href="#cite-wan-1" role="doc-backlink" aria-label="Back to citation 1 of reference 3">↩</a></li>
   <li id="ref-flux">Black Forest Labs. <a href="https://huggingface.co/black-forest-labs/FLUX.1-dev"><cite>FLUX.1 [dev]</cite></a>. Model card, 2024. <a class="citation-back" href="#cite-flux-1" role="doc-backlink" aria-label="Back to citation 1 of reference 4">↩</a></li>
-  <li id="ref-sander">Sander Dieleman. <a href="https://sander.ai/2022/05/26/guidance.html"><cite>Guidance: a cheat code for diffusion models</cite></a>. May 26, 2022; including the May 29 correction. <a class="citation-back" href="#cite-sander-1" role="doc-backlink" aria-label="Back to citation 1 of reference 5">↩1</a> <a class="citation-back" href="#cite-sander-2" role="doc-backlink" aria-label="Back to citation 2 of reference 5">↩2</a></li>
+  <li id="ref-sander">Sander Dieleman. <a href="https://sander.ai/2022/05/26/guidance.html"><cite>Guidance: a cheat code for diffusion models</cite></a>. May 26, 2022; including the May 29 correction. <a class="citation-back" href="#cite-sander-1" role="doc-backlink" aria-label="Back to citation 1 of reference 5">↩1</a> <a class="citation-back" href="#cite-sander-2" role="doc-backlink" aria-label="Back to citation 2 of reference 5">↩2</a> <a class="citation-back" href="#cite-sander-3" role="doc-backlink" aria-label="Back to citation 3 of reference 5">↩3</a></li>
   <li id="ref-predictor-corrector">Arwen Bradley and Preetum Nakkiran. <a href="https://arxiv.org/abs/2408.09000"><cite>Classifier-Free Guidance is a Predictor-Corrector</cite></a>. arXiv, 2024. <a class="citation-back" href="#cite-predictor-corrector-1" role="doc-backlink" aria-label="Back to citation 1 of reference 6">↩</a></li>
   <li id="ref-fine-grained">Muthu Chidambaram et al. <a href="https://arxiv.org/abs/2409.13074"><cite>What does guidance do? A fine-grained analysis in a simple setting</cite></a>. arXiv, 2024. <a class="citation-back" href="#cite-fine-grained-1" role="doc-backlink" aria-label="Back to citation 1 of reference 7">↩</a></li>
   <li id="ref-llm-cfg">Guillaume V. Sanchez et al. <a href="https://arxiv.org/abs/2306.17806"><cite>Stay on topic with Classifier-Free Guidance</cite></a>. arXiv, 2023. <a class="citation-back" href="#cite-llm-cfg-1" role="doc-backlink" aria-label="Back to citation 1 of reference 8">↩</a></li>
@@ -407,5 +391,4 @@ tags:
   <li id="ref-loopmdm">Sanghyun Lee et al. <a href="https://arxiv.org/abs/2605.26106"><cite>Looped Diffusion Language Models</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-loopmdm-1" role="doc-backlink" aria-label="Back to citation 1 of reference 19">↩</a></li>
   <li id="ref-looped-dit">Yong Xien Chng et al. <a href="https://arxiv.org/abs/2609.40305"><cite>Looped Diffusion Transformer</cite></a>. arXiv, 2026. <a class="citation-back" href="#cite-looped-dit-1" role="doc-backlink" aria-label="Back to citation 1 of reference 20">↩</a></li>
   <li id="ref-test-time-compute">Edward Beeching, Lewis Tunstall, and Sasha Rush. <a href="https://huggingface.co/spaces/HuggingFaceH4/blogpost-scaling-test-time-compute"><cite>Scaling test-time compute with open models</cite></a>. Hugging Face, 2024. <a class="citation-back" href="#cite-test-time-compute-1" role="doc-backlink" aria-label="Back to citation 1 of reference 21">↩</a></li>
-  <li id="ref-why-we-think">Lilian Weng. <a href="https://lilianweng.github.io/posts/2025-05-01-thinking/"><cite>Why We Think</cite></a>. Lil'Log, May 1, 2025. <a class="citation-back" href="#cite-why-we-think-1" role="doc-backlink" aria-label="Back to citation 1 of reference 22">↩</a></li>
 </ol>
