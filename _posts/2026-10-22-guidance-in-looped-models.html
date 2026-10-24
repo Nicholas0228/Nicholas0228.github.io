@@ -134,7 +134,7 @@ tags:
 
 <p>A looped Transformer applies <strong>the same block of layers repeatedly</strong> before predicting the next token. Huginn<sup class="citation" id="cite-huginn-1"><a href="#ref-huginn" role="doc-noteref" aria-label="Reference 11: Jonas Geiping et al., Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach">11</a></sup> and Ouro<sup class="citation" id="cite-ouro-1"><a href="#ref-ouro" role="doc-noteref" aria-label="Reference 12: Rui-Jie Zhu et al., Scaling Latent Reasoning via Looped Language Models">12</a></sup> implement this idea in different ways. Each completed loop gives a hidden state that can be converted into next-token logits (unnormalized token scores): \(z_E\) after an earlier loop \(E\), and \(z_K\) after the final loop \(K\).</p>
 
-<figure class="loop-architecture" id="loop-architecture" aria-label="Repeated applications of the same block f refine the hidden state from loop E to final loop K. These states produce early and final next-token logits.">
+<figure class="loop-architecture" id="loop-architecture" aria-label="Repeated applications of the same block f refine the hidden state from loop E to final loop K. The early and final logits are close and are combined for guidance.">
   <div class="architecture-label">Same block, repeated</div>
   <div class="trajectory">
     <div class="state state-early">\(h_E\)</div><span class="arrow" aria-hidden="true">&rarr;</span>
@@ -144,8 +144,16 @@ tags:
     <span class="readout-arrow readout-early" aria-hidden="true">&darr;</span>
     <span class="readout-arrow readout-final" aria-hidden="true">&darr;</span>
     <div class="logits logits-early">\(z_E\)<small>Early logits</small></div>
+    <div class="logit-space">
+      <span class="space-arrow space-arrow-early" aria-hidden="true"></span>
+      <span>Close logits</span>
+      <span class="space-arrow space-arrow-final" aria-hidden="true"></span>
+    </div>
     <div class="logits logits-final">\(z_K\)<small>Final logits</small></div>
   </div>
+  <div class="equation architecture-guidance">\[
+    z_{\rm guided}=z_K+w(z_K-z_E).
+  \]</div>
 </figure>
 
 <p>The earlier prediction serves as the weaker reference for guiding the final prediction. Both come from the same model on the same text prefix; the difference is how many loops of computation they use.</p>

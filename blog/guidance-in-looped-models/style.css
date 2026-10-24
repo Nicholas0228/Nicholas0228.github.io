@@ -86,6 +86,14 @@ td:last-child,th:last-child{padding-right:0}
 .trajectory .readout-label{grid-column:2/7;grid-row:2;font:12px/1.5 var(--sans);color:var(--muted)}
 .trajectory .logits{grid-row:3}
 .trajectory small{display:block;font:11px/1.5 var(--sans);color:var(--muted);margin-top:5px;white-space:nowrap}
+.logit-space{grid-column:2/7;grid-row:3;align-self:start;display:flex;align-items:center;gap:12px;min-height:31px;min-width:0;font:13px/1.4 var(--sans);color:var(--muted)}
+.space-arrow{position:relative;flex:1;min-width:14px;border-top:1px solid currentColor}
+.space-arrow::after{content:"";position:absolute;top:-3px;width:5px;height:5px;border-top:1px solid currentColor;border-right:1px solid currentColor}
+.space-arrow-early{color:var(--green)}
+.space-arrow-early::after{left:0;transform:rotate(-135deg)}
+.space-arrow-final{color:var(--blue)}
+.space-arrow-final::after{right:0;transform:rotate(45deg)}
+.loop-architecture .architecture-guidance{margin:22px 0 0}
 .toy{background:#fff;border:1px solid var(--line);padding:26px 28px;margin:30px 0}
 .toy h3{margin:0 0 6px;font-size:24px}
 .toy-description{font:13px/1.7 var(--sans);color:var(--muted);margin:0 0 22px}
@@ -125,6 +133,6 @@ td:last-child,th:last-child{padding-right:0}
 .endnote{font:13px/1.75 var(--sans);color:var(--muted);border-top:1px solid var(--line);padding-top:23px;margin-top:38px}
 .site-footer{border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;padding:25px 0 40px;color:var(--muted);font-size:12px}
 @media(max-width:820px){.essay{max-width:calc(100% - 40px)}.wide{width:100%;margin-left:0}.article-header{margin-top:44px}.site-header,.site-footer{width:calc(100% - 40px)}}
-@media(max-width:520px){body{font-size:19px;line-height:1.65}.opening{font-size:21px}.site-header nav{min-height:66px;gap:12px}.site-name{font-size:12px}h1{font-size:39px}h2{font-size:28px;margin-top:42px}h3{font-size:23px}.proof-body{padding-inline:8px;font-size:17px}.equation{font-size:82%}.toy{padding:21px 16px}.toy-controls{grid-template-columns:1fr;gap:17px}.probability{grid-template-columns:110px 1fr 52px;gap:9px;font-size:12px}.toy .probability output{font-size:16px}.loop-architecture{padding:18px 0}.architecture-label{font-size:11px}.trajectory{column-gap:3px;grid-template-columns:minmax(40px,1fr) auto 1.2fr auto 1.65fr auto minmax(40px,1fr)}.trajectory .state,.trajectory .logits{font-size:clamp(14px,4vw,18px)}.trajectory small{font-size:10px}.trajectory .arrow{font-size:17px;line-height:1.1}.trajectory .readout-label{font-size:11px}th,td{padding:10px 9px}.site-footer{flex-wrap:wrap}.contents{gap:8px 14px}blockquote{font-size:21px}}
+@media(max-width:520px){body{font-size:19px;line-height:1.65}.opening{font-size:21px}.site-header nav{min-height:66px;gap:12px}.site-name{font-size:12px}h1{font-size:39px}h2{font-size:28px;margin-top:42px}h3{font-size:23px}.proof-body{padding-inline:8px;font-size:17px}.equation{font-size:82%}.toy{padding:21px 16px}.toy-controls{grid-template-columns:1fr;gap:17px}.probability{grid-template-columns:110px 1fr 52px;gap:9px;font-size:12px}.toy .probability output{font-size:16px}.loop-architecture{padding:18px 0}.architecture-label{font-size:11px}.trajectory{column-gap:3px;grid-template-columns:minmax(40px,1fr) auto 1.2fr auto 1.65fr auto minmax(40px,1fr)}.trajectory .state,.trajectory .logits{font-size:16px}.trajectory small{font-size:10px;white-space:normal}.trajectory .arrow{font-size:17px;line-height:1.1}.trajectory .readout-label{font-size:11px}.logit-space{min-height:23px;gap:8px;font-size:12px}th,td{padding:10px 9px}.site-footer{flex-wrap:wrap}.contents{gap:8px 14px}blockquote{font-size:21px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.bar span{transition:none}}
 @media print{body{background:white;font-size:12pt}.site-header,.contents,.site-footer,.figure-links,.toy-controls,.citation-back{display:none}.essay{max-width:100%}.article-header{margin-top:0}.wide{width:100%;margin-left:0}h2,h3,summary{break-after:avoid}figure,table,.trajectory{break-inside:avoid}.toy{break-inside:auto}.proof{border:0}.proof summary{font-size:12pt}.proof-body{font-size:11pt}a{color:inherit}.equation{overflow:visible}.article-meta{font-size:10pt}}
