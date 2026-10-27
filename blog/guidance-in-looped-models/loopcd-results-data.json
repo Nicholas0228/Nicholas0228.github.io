@@ -1,0 +1,33 @@
+{
+  "source": "https://arxiv.org/html/2610.02185v1",
+  "provenance": "Published LoopCD results, replotted for this blog; not new experiments.",
+  "metric": "pass@1 (%)",
+  "panels": [
+    {
+      "title": "Logit guidance",
+      "model": "Ouro-2.6B-Thinking",
+      "benchmark": "AIME 2024",
+      "loops": 4,
+      "reference_loop": 1,
+      "result_table": "1(a)",
+      "settings_table": "A4",
+      "rows": [
+        {"label": "Unguided", "score": 61.88, "kind": "baseline"},
+        {"label": "Guided", "score": 70.62, "kind": "fixed", "strength": 0.5}
+      ]
+    },
+    {
+      "title": "Hidden-state guidance",
+      "model": "Huginn-0125",
+      "benchmark": "HumanEval",
+      "loops": 32,
+      "reference_loop": 7,
+      "result_table": "3(b)",
+      "settings_table": "A4",
+      "rows": [
+        {"label": "Unguided", "score": 22.56, "kind": "baseline"},
+        {"label": "Guided", "score": 31.71, "kind": "fixed", "strength": 0.3}
+      ]
+    }
+  ]
+}
