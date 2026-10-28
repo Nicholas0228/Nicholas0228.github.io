@@ -27,14 +27,14 @@ tags:
 <p>The looped design also opens up new possibilities for decoding. Standard decoding uses only the final prediction, while guidance uses an earlier prediction as a reference and pushes the final prediction further along the early-to-final direction. Guidance has been a long-studied problem in LLMs, with mixed results.<sup class="citation" id="cite-dola-intro"><a href="#ref-dola" role="doc-noteref" aria-label="Reference 5: DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models">5</a></sup><sup class="citation" id="cite-cd-reasoning-1">, <a href="#ref-cd-reasoning" role="doc-noteref" aria-label="Reference 20: Contrastive Decoding Improves Reasoning in Large Language Models">20</a></sup> In looped models, however, recent work has shown this form of guidance to be particularly effective.<sup class="citation" id="cite-loopcd-intro"><a href="#ref-loopcd" role="doc-noteref" aria-label="Reference 3: Decoding Looped Transformers Better for (Almost) Free">3</a></sup> In this blog, we ask: <strong>why does guidance appear to work better in looped models than in standard LLMs?</strong> We explain how loops can help, and how this connects language models more closely to diffusion.</p>
 
 <nav class="contents contents-numbered" aria-label="In this article">
-  <a href="#loops"><span class="contents-number">01</span> Loop predictions</a>
+  <a href="#loops"><span class="contents-number">01</span> Loop guidance</a>
   <a href="#sequences"><span class="contents-number">02</span> Tokens vs. sequences</a>
-  <a href="#cancellation"><span class="contents-number">03</span> Close logits</a>
+  <a href="#cancellation"><span class="contents-number">03</span> Why Loooop</a>
   <a href="#measurements"><span class="contents-number">04</span> Prediction gaps</a>
   <a href="#connections"><span class="contents-number">05</span> Diffusion connection</a>
 </nav>
 
-<h2 id="loops"><span class="section-number">01</span>More use from the same loops</h2>
+<h2 id="loops"><span class="section-number">01</span>Guidance in looped models</h2>
 
 <figure class="visual-interlude" id="loop-interlude">
   <img src="{{ '/blog/guidance-in-looped-models/images/spiral-staircase.jpg' | relative_url }}" width="1280" height="854" loading="lazy" decoding="async" alt="Looking down a spiral staircase, with repeating white curves and yellow-edged steps.">
@@ -90,7 +90,7 @@ tags:
 
 <p>LoopCD reports substantial gains from this simple change. This raises a natural question: <strong>what makes looped models particularly well suited to guidance?</strong> Below, we connect this behavior to the similarity between predictions across loops. We first examine the gap between <strong>the sequence-level distribution we want and the token-level rule we use in practice.</strong></p>
 
-<h2 id="sequences"><span class="section-number">02</span>What does token-level guidance actually sample?</h2>
+<h2 id="sequences"><span class="section-number">02</span>Token-level vs. sequence-level guidance</h2>
 
 <figure class="visual-interlude" id="sequence-interlude">
   <img src="{{ '/blog/guidance-in-looped-models/images/sunlit-arches.jpg' | relative_url }}" width="1600" height="1067" loading="lazy" decoding="async" alt="Warm sunlight falls through a row of stone arches and windows.">
@@ -130,32 +130,33 @@ tags:
 
 <h3>A two-token example</h3>
 
-<p>Suppose a sequence has just two tokens. Both predictors choose \(A\) or \(B\) first with probability \(1/2\). After \(A\), both remain uniform over \(1,2\). After \(B\), the early predictor is still uniform but the final predictor assigns probabilities \(0.9,0.1\). Local guidance leaves the first decision unchanged because the predictors agree there. Joint guidance changes it, because the guided continuations after \(B\) carry more total weight.</p>
+<p>Suppose a sequence has just two tokens. Both predictors start with \(P(B)=p\) and \(P(A)=1-p\). After \(A\), both remain uniform over \(1,2\). After \(B\), the early predictor is still uniform but the final predictor assigns probabilities \(0.5+d,0.5-d\), where \(d\) is the probability difference. Token-level guidance preserves the initial \(p\), because the predictors agree on the first token. Joint guidance can change it by accounting for the guided weight of future continuations.</p>
 
 <figure class="toy" id="guidance-toy">
   <h3>Same token weights, different sequence probabilities</h3>
-  <p class="toy-description">Compare token-level \(Q_{\rm local}\) with the joint target \(Q_{\rm joint}\) from Equation (3). If they were equivalent, they would give <strong>the same probability of starting with B</strong>. Shrink the predictor difference to see the gap close.</p>
+  <p class="toy-description">Compare token-level \(Q_{\rm local}\) with the joint target \(Q_{\rm joint}\) from Equation (3). If they were equivalent, they would give <strong>the same probability of starting with B</strong> for every choice of the shared initial probability.</p>
   <div class="toy-controls">
+    <div><label for="toy-initial-b">Initial P(B) <output id="initial-b-value" for="toy-initial-b">50%</output></label><input id="toy-initial-b" type="range" min="0.01" max="0.99" step="0.01" value="0.5"></div>
     <div><label for="toy-strength">Guidance strength w <output id="strength-value" for="toy-strength">1.00</output></label><input id="toy-strength" type="range" min="0" max="3" step="0.05" value="1"></div>
-    <div><label for="toy-difference">Probability difference after B <output id="difference-value" for="toy-difference">0.40</output></label><input id="toy-difference" type="range" min="0" max="0.4" step="0.01" value="0.4"></div>
+    <div><label for="toy-difference">Difference after B <output id="difference-value" for="toy-difference">0.40</output></label><input id="toy-difference" type="range" min="0" max="0.4" step="0.01" value="0.4"></div>
   </div>
   <p class="toy-question">Probability of starting with B</p>
-  <div class="probability"><strong>Token-level<br>\(Q_{\rm local}\)</strong><div class="bar" aria-hidden="true"><span style="width:50%"></span></div><output>50.0%</output></div>
+  <div class="probability"><strong>Token-level<br>\(Q_{\rm local}\)</strong><div class="bar" aria-hidden="true"><span id="local-b-bar" style="width:50%"></span></div><output id="local-b-value">50.0%</output></div>
   <div class="probability toy-joint"><strong>Joint target<br>\(Q_{\rm joint}\)</strong><div class="bar" aria-hidden="true"><span id="joint-b-bar" style="width:62.1212%"></span></div><output id="joint-b-value">62.1%</output></div>
   <div class="equation">\[
     \begin{aligned}
-      Q_{\rm local}(y_1=B)&amp;=\frac12,\\
-      Q_{\rm joint}(y_1=B)&amp;=\frac{C(B)}{1+C(B)}.
+      Q_{\rm local}(y_1=B)&amp;=p,\\
+      Q_{\rm joint}(y_1=B)&amp;=\frac{pC(B)}{1-p+pC(B)}.
     \end{aligned}
   \]</div>
   <p class="toy-takeaway" aria-live="polite" aria-atomic="true"><strong><span id="toy-gap-value">12.1</span> <span id="toy-gap-label">percentage-point gap.</span></strong> <span id="toy-gap-explanation">Even the first-token probabilities differ.</span></p>
-  <figcaption>An exact four-sequence toy model. Setting either slider to zero makes the two distributions agree.</figcaption>
-  <noscript><p class="table-note">The example shows w = 1 and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
+  <figcaption>An exact four-sequence toy model. For any initial P(B), zero guidance strength or zero predictor difference makes the two distributions agree.</figcaption>
+  <noscript><p class="table-note">The example shows initial P(B) = 50%, w = 1, and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
 </figure>
 
 <p>The example identifies what we need to control: variation in the local normalizers along a sequence. <strong>What would keep these normalizers close to 1?</strong></p>
 
-<h2 id="cancellation"><span class="section-number">03</span>Why close loop logits help</h2>
+<h2 id="cancellation"><span class="section-number">03</span>Why loops narrow the gap</h2>
 
 <figure class="visual-interlude" id="normalizer-interlude">
   <img src="{{ '/blog/guidance-in-looped-models/images/water-reflections.jpg' | relative_url }}" width="1600" height="1067" loading="lazy" decoding="async" alt="Sunlight makes soft, overlapping patterns on blue water.">

@@ -2,20 +2,24 @@
   'use strict';
 
   // Exact enumeration of the four possible answers in the article's toy model.
-  function compute(strength, difference) {
+  function compute(strength, difference, initialB = 0.5) {
     if (!Number.isFinite(strength) || strength < 0 || !Number.isFinite(difference) || difference < 0 || difference >= 0.5) {
       throw new RangeError('Use nonnegative guidance and a probability difference in [0, 0.5).');
     }
-    const strong = [0.25, 0.25, 0.5 * (0.5 + difference), 0.5 * (0.5 - difference)];
-    const reference = [0.25, 0.25, 0.25, 0.25];
+    if (!Number.isFinite(initialB) || initialB <= 0 || initialB >= 1) {
+      throw new RangeError('Use an initial probability of B strictly between 0 and 1.');
+    }
+    const a = (1 - initialB) / 2;
+    const strong = [a, a, initialB * (0.5 + difference), initialB * (0.5 - difference)];
+    const reference = [a, a, initialB / 2, initialB / 2];
     const scores = strong.map((p, i) => Math.pow(p, 1 + strength) / Math.pow(reference[i], strength));
     const z = scores.reduce((a, b) => a + b, 0);
     const joint = scores.map(p => p / z);
-    const local = [0.25, 0.25, 0.5 * scores[2] / (scores[2] + scores[3]), 0.5 * scores[3] / (scores[2] + scores[3])];
+    const local = [a, a, initialB * scores[2] / (scores[2] + scores[3]), initialB * scores[3] / (scores[2] + scores[3])];
     const cB = Math.pow(0.5 + difference, 1 + strength) / Math.pow(0.5, strength)
       + Math.pow(0.5 - difference, 1 + strength) / Math.pow(0.5, strength);
     const tv = 0.5 * local.reduce((s, p, i) => s + Math.abs(p - joint[i]), 0);
-    return { strong, reference, local, joint, cB, z, tv, jointB: joint[2] + joint[3] };
+    return { strong, reference, local, joint, cB, z, tv, localB: local[2] + local[3], jointB: joint[2] + joint[3] };
   }
 
   if (typeof module !== 'undefined' && module.exports) module.exports = { compute };
@@ -24,16 +28,21 @@
   function initToy(root) {
     const toy = root.querySelector('#guidance-toy');
     if (!toy) return;
+    const initialB = toy.querySelector('#toy-initial-b');
     const strength = toy.querySelector('#toy-strength');
     const difference = toy.querySelector('#toy-difference');
     function update() {
-      const w = Number(strength.value), d = Number(difference.value), result = compute(w, d);
+      const p = Number(initialB.value), w = Number(strength.value), d = Number(difference.value);
+      const result = compute(w, d, p);
+      toy.querySelector('#initial-b-value').textContent = (100 * p).toFixed(0) + '%';
       toy.querySelector('#strength-value').textContent = w.toFixed(2);
       toy.querySelector('#difference-value').textContent = d.toFixed(2);
+      toy.querySelector('#local-b-value').textContent = (100 * result.localB).toFixed(1) + '%';
+      toy.querySelector('#local-b-bar').style.width = (100 * result.localB) + '%';
       toy.querySelector('#joint-b-value').textContent = (100 * result.jointB).toFixed(1) + '%';
       toy.querySelector('#joint-b-bar').style.width = (100 * result.jointB) + '%';
       const agree = w === 0 || d === 0;
-      const gap = 100 * (result.jointB - 0.5);
+      const gap = 100 * Math.abs(result.jointB - result.localB);
       toy.querySelector('#toy-gap-value').textContent = agree ? 'No' : (gap < 0.05 ? '<0.1' : gap.toFixed(1));
       toy.querySelector('#toy-gap-label').textContent = agree ? 'gap.' : 'percentage-point gap.';
       toy.querySelector('#toy-gap-explanation').textContent = agree
@@ -41,8 +50,7 @@
         : 'Even the first-token probabilities differ.';
       toy.classList.toggle('toy-agree', agree);
     }
-    strength.addEventListener('input', update);
-    difference.addEventListener('input', update);
+    for (const slider of [initialB, strength, difference]) slider.addEventListener('input', update);
     update();
   }
 

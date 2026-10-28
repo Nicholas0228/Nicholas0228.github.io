@@ -111,27 +111,28 @@ tags:
 
 <h3>A tiny example makes the difference visible</h3>
 
-<p>Suppose a sequence has just two tokens. Both predictors choose \(A\) or \(B\) with probability \(1/2\). After \(A\), both remain uniform over \(1,2\). After \(B\), the reference is still uniform but the stronger predictor assigns probabilities \(0.9,0.1\). Token-level guidance cannot change the first decision: the predictors agree there. The guided joint distribution can, because it accounts for the guided weight of the continuations after \(B\).</p>
+<p>Suppose a sequence has just two tokens. Both predictors start with \(P(B)=p\) and \(P(A)=1-p\). After \(A\), both remain uniform over \(1,2\). After \(B\), the reference is still uniform but the stronger predictor assigns probabilities \(0.5+d,0.5-d\), where \(d\) is the probability difference. Token-level guidance preserves the initial \(p\), because the predictors agree on the first token. The guided joint distribution can change it by accounting for the guided weight of future continuations.</p>
 
 <figure class="toy" id="guidance-toy">
   <h3>Same token weights, different sequence probabilities</h3>
-  <p class="toy-description">Compare token-level \(Q_{\rm local}\) with the joint target \(Q_{\rm joint}\) from Equation (3). If they were equivalent, they would give <strong>the same probability of starting with B</strong>. Shrink the predictor difference to see the gap close.</p>
+  <p class="toy-description">Compare token-level \(Q_{\rm local}\) with the joint target \(Q_{\rm joint}\) from Equation (3). If they were equivalent, they would give <strong>the same probability of starting with B</strong> for every choice of the shared initial probability.</p>
   <div class="toy-controls">
+    <div><label for="toy-initial-b">Initial P(B) <output id="initial-b-value" for="toy-initial-b">50%</output></label><input id="toy-initial-b" type="range" min="0.01" max="0.99" step="0.01" value="0.5"></div>
     <div><label for="toy-strength">Guidance strength w <output id="strength-value" for="toy-strength">1.00</output></label><input id="toy-strength" type="range" min="0" max="3" step="0.05" value="1"></div>
-    <div><label for="toy-difference">Probability difference after B <output id="difference-value" for="toy-difference">0.40</output></label><input id="toy-difference" type="range" min="0" max="0.4" step="0.01" value="0.4"></div>
+    <div><label for="toy-difference">Difference after B <output id="difference-value" for="toy-difference">0.40</output></label><input id="toy-difference" type="range" min="0" max="0.4" step="0.01" value="0.4"></div>
   </div>
   <p class="toy-question">Probability of starting with B</p>
-  <div class="probability"><strong>Token-level<br>\(Q_{\rm local}\)</strong><div class="bar" aria-hidden="true"><span style="width:50%"></span></div><output>50.0%</output></div>
+  <div class="probability"><strong>Token-level<br>\(Q_{\rm local}\)</strong><div class="bar" aria-hidden="true"><span id="local-b-bar" style="width:50%"></span></div><output id="local-b-value">50.0%</output></div>
   <div class="probability toy-joint"><strong>Joint target<br>\(Q_{\rm joint}\)</strong><div class="bar" aria-hidden="true"><span id="joint-b-bar" style="width:62.1212%"></span></div><output id="joint-b-value">62.1%</output></div>
   <div class="equation">\[
     \begin{aligned}
-      Q_{\rm local}(y_1=B)&=\frac12,\\
-      Q_{\rm joint}(y_1=B)&=\frac{C(B)}{1+C(B)}.
+      Q_{\rm local}(y_1=B)&=p,\\
+      Q_{\rm joint}(y_1=B)&=\frac{pC(B)}{1-p+pC(B)}.
     \end{aligned}
   \]</div>
   <p class="toy-takeaway" aria-live="polite" aria-atomic="true"><strong><span id="toy-gap-value">12.1</span> <span id="toy-gap-label">percentage-point gap.</span></strong> <span id="toy-gap-explanation">Even the first-token probabilities differ.</span></p>
-  <figcaption>An exact four-sequence toy model. Setting either slider to zero makes the two distributions agree.</figcaption>
-  <noscript><p class="table-note">The example shows w = 1 and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
+  <figcaption>An exact four-sequence toy model. For any initial P(B), zero guidance strength or zero predictor difference makes the two distributions agree.</figcaption>
+  <noscript><p class="table-note">The example shows initial P(B) = 50%, w = 1, and a probability difference of 0.4. Enable JavaScript to move the sliders.</p></noscript>
 </figure>
 
 <h2 id="loops"><span class="section-number">03</span>Loooop</h2>

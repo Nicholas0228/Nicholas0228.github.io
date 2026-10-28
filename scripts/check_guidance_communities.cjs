@@ -21,6 +21,33 @@ async function select(page, label, path) {
     document.querySelector('.community-switch [aria-current]').textContent === expected, label);
 }
 
+async function checkToy(page) {
+  assert.equal(await page.locator('#guidance-toy input[type="range"]').count(), 3);
+  for (const test of [
+    { p: 0.1, w: 1, d: 0.4, local: '10.0%', joint: '15.4%', gap: '5.4' },
+    { p: 0.1, w: 2.5, d: 0.4, local: '10.0%', joint: '30.3%', gap: '20.3' },
+    { p: 0.3, w: 2.5, d: 0.4, local: '30.0%', joint: '62.7%', gap: '32.7' },
+    { p: 0.5, w: 1, d: 0.4, local: '50.0%', joint: '62.1%', gap: '12.1' },
+    { p: 0.9, w: 0, d: 0.4, local: '90.0%', joint: '90.0%', gap: 'No' },
+    { p: 0.1, w: 3, d: 0, local: '10.0%', joint: '10.0%', gap: 'No' },
+  ]) {
+    await page.locator('#guidance-toy').evaluate((toy, { p, w, d }) => {
+      for (const [id, value] of [['toy-initial-b', p], ['toy-strength', w], ['toy-difference', d]]) {
+        const input = toy.querySelector('#' + id);
+        input.value = String(value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }, test);
+    assert.equal(await page.locator('#initial-b-value').innerText(), (100 * test.p).toFixed(0) + '%');
+    assert.equal(await page.locator('#local-b-value').innerText(), test.local);
+    assert.equal(await page.locator('#joint-b-value').innerText(), test.joint);
+    assert.equal(await page.locator('#toy-gap-value').innerText(), test.gap);
+    assert.ok(Math.abs(await page.locator('#local-b-bar').evaluate(el => parseFloat(el.style.width)) - 100 * test.p) < 1e-10);
+  }
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  assert.equal(await page.locator('mjx-merror').count(), 0);
+}
+
 (async () => {
   const browser = await chromium.launch({
     headless: true,
@@ -54,6 +81,9 @@ async function select(page, label, path) {
         const slider = document.querySelector('#toy-strength');
         slider.value = '2';
         slider.dispatchEvent(new Event('input'));
+        const initial = document.querySelector('#toy-initial-b');
+        initial.value = '0.1';
+        initial.dispatchEvent(new Event('input'));
         window.scrollTo({ top: 600, behavior: 'instant' });
       });
       await page.getByRole('link', { name: 'LLM readers', exact: true }).dispatchEvent('click');
@@ -62,10 +92,12 @@ async function select(page, label, path) {
         sameMath: window.savedMath === document.querySelector('#loop-architecture mjx-container'),
         scroll: window.scrollY,
         slider: document.querySelector('#toy-strength').value,
+        initialB: document.querySelector('#toy-initial-b').value,
+        localB: document.querySelector('#local-b-value').textContent,
         proofOpen: document.querySelector('#proof-taylor').open,
         overflow: document.documentElement.scrollWidth > innerWidth,
       }));
-      assert.deepEqual(state, { sameMath: true, scroll: 600, slider: '2', proofOpen: true, overflow: false });
+      assert.deepEqual(state, { sameMath: true, scroll: 600, slider: '2', initialB: '0.1', localB: '10.0%', proofOpen: true, overflow: false });
       await select(page, 'Diffusion readers', diffusion);
       await page.goBack();
       await page.waitForFunction(() => document.querySelector('.community-switch').dataset.community === 'llm');
@@ -102,9 +134,11 @@ async function select(page, label, path) {
       assert.equal(new URL(await page.locator('link[rel="canonical"]').getAttribute('href')).pathname, llm);
       await page.locator('#toy-strength').fill('0');
       assert.equal(await page.locator('#joint-b-value').innerText(), '50.0%');
+      await checkToy(page);
       await select(page, 'Diffusion readers', diffusion);
       assert.equal(await page.locator('#llm-fixture').count(), 0);
       assert.equal(await page.locator('mjx-merror').count(), 0);
+      await checkToy(page);
       await page.evaluate(() => {
         const links = document.querySelectorAll('.community-switch a');
         links[0].click(); links[1].click(); links[0].click();
@@ -115,9 +149,24 @@ async function select(page, label, path) {
       await page.close();
     }
 
+    for (const path of [llm, diffusion]) {
+      for (const width of [1440, 768, 600, 390, 320]) {
+        const page = await browser.newPage({ viewport: { width, height: 1000 } });
+        page.on('pageerror', error => errors.push(error.message));
+        await page.goto(base + path);
+        await settle(page);
+        await checkToy(page);
+        await page.close();
+      }
+    }
+
     const plain = await browser.newPage({ javaScriptEnabled: false });
     await plain.goto(base + diffusion);
+    assert.equal(await plain.locator('#local-b-value').innerText(), '50.0%');
+    assert.equal(await plain.locator('#joint-b-value').innerText(), '62.1%');
     await select(plain, 'LLM readers', llm);
+    assert.equal(await plain.locator('#local-b-value').innerText(), '50.0%');
+    assert.equal(await plain.locator('#joint-b-value').innerText(), '62.1%');
     await plain.close();
 
     const fallback = await browser.newPage();
@@ -130,7 +179,7 @@ async function select(page, label, path) {
     assert.equal(await fallback.evaluate(() => window.pageMarker), undefined);
     await fallback.close();
     assert.deepEqual(errors, []);
-    console.log('PASS: desktop/mobile, no reload or retypesetting for matching bodies, scroll/widgets, history, anchors, independent content, rapid switching, reduced motion, no-JS and network fallback.');
+    console.log('PASS: desktop/mobile, three-slider toy in both versions, no reload or retypesetting for matching bodies, scroll/widgets, history, anchors, independent content, rapid switching, reduced motion, no-JS and network fallback.');
   } finally {
     await browser.close();
   }
