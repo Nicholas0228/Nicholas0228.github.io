@@ -1,0 +1,18 @@
+<figure class="token-tree" id="two-token-tree">
+  <div class="token-tree-diagram" role="img" aria-label="The stronger predictor starts with probability 1 minus P(B) for A and P(B) for B. After A, it assigns 0.5 to each next token. After B, it assigns 0.5 plus d to 1 and 0.5 minus d to 2. The four complete sequences are A1, A2, B1, and B2.">
+    <svg class="token-tree-branches" viewBox="0 0 600 332" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M300 32 L150 122 M300 32 L450 122 M150 154 L75 208 V300 M150 154 L225 208 V300 M450 154 L375 208 V300 M450 154 L525 208 V300" />
+    </svg>
+    <div class="token-tree-start" aria-hidden="true">Start</div>
+    <div class="token-tree-probability token-tree-prob-a" aria-hidden="true">\(1-P(B)\)<output id="tree-a-value" for="toy-initial-b">70%</output></div>
+    <div class="token-tree-probability token-tree-prob-b" aria-hidden="true">\(P(B)\)<output id="tree-b-value" for="toy-initial-b">30%</output></div>
+    <div class="token-tree-first" aria-hidden="true"><strong>A</strong><strong>B</strong></div>
+    <div class="token-tree-probability token-tree-prob-a1" aria-hidden="true">\(0.5\)</div>
+    <div class="token-tree-probability token-tree-prob-a2" aria-hidden="true">\(0.5\)</div>
+    <div class="token-tree-probability token-tree-prob-b1 token-tree-final" aria-hidden="true">\(0.5+d\)</div>
+    <div class="token-tree-probability token-tree-prob-b2 token-tree-final" aria-hidden="true">\(0.5-d\)</div>
+    <div class="token-tree-second" aria-hidden="true"><strong>1</strong><strong>2</strong><strong>1</strong><strong>2</strong></div>
+    <div class="token-tree-sequences" aria-hidden="true"><span data-sequence="A1">A1</span><span data-sequence="A2">A2</span><span data-sequence="B1">B1</span><span data-sequence="B2">B2</span></div>
+  </div>
+  <figcaption>A two-token tree.</figcaption>
+</figure>

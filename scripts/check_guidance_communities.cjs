@@ -22,8 +22,32 @@ async function select(page, label, path) {
 }
 
 async function checkToy(page) {
+  assert.equal(await page.locator('#toy-after-b-probabilities, #after-b-one-value, #after-b-two-value').count(), 0);
+  assert.equal(await page.locator('#two-token-tree .token-tree-legend, #two-token-tree .token-tree-reference').count(), 0);
+  assert.equal(await page.locator('.token-tree-prob-b1 output, .token-tree-prob-b2 output').count(), 0);
+  assert.equal(await page.locator('#two-token-tree figcaption').evaluate(el =>
+    el.getBoundingClientRect().height <= parseFloat(getComputedStyle(el).lineHeight) + 1), true);
+  assert.equal(await page.locator('#guidance-toy .toy-marginals').evaluate(el =>
+    el.scrollWidth <= el.clientWidth + 1), true);
+  assert.deepEqual(await page.locator('#two-token-tree [data-sequence]').evaluateAll(nodes =>
+    nodes.map(node => node.dataset.sequence)), ['A1', 'A2', 'B1', 'B2']);
+  assert.equal(await page.locator('#two-token-tree').evaluate(tree =>
+    tree.nextElementSibling?.id === 'toy-setup'), true);
+  assert.equal(await page.locator('.token-tree-diagram').evaluate(tree =>
+    [...tree.querySelectorAll('[data-sequence], .token-tree-probability')].every(node => {
+      const bounds = node.getBoundingClientRect();
+      const parent = tree.getBoundingClientRect();
+      return bounds.left >= parent.left && bounds.right <= parent.right && bounds.top >= parent.top && bounds.bottom <= parent.bottom;
+    })), true);
+  assert.equal(await page.locator('.token-tree-probability').evaluateAll(nodes =>
+    nodes.every((node, i) => nodes.slice(i + 1).every(other => {
+      const a = node.getBoundingClientRect(), b = other.getBoundingClientRect();
+      return a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+    }))), true);
   assert.equal(await page.locator('#guidance-toy input[type="range"]').count(), 3);
   for (const test of [
+    { p: 0.3, w: 3, d: 0.4, local: '30.0%', joint: '69.2%', gap: '39.2' },
+    { p: 0.5, w: 1, d: 0.2, local: '50.0%', joint: '53.7%', gap: '3.7' },
     { p: 0.1, w: 1, d: 0.4, local: '10.0%', joint: '15.4%', gap: '5.4' },
     { p: 0.1, w: 2.5, d: 0.4, local: '10.0%', joint: '30.3%', gap: '20.3' },
     { p: 0.3, w: 2.5, d: 0.4, local: '30.0%', joint: '62.7%', gap: '32.7' },
@@ -39,6 +63,9 @@ async function checkToy(page) {
       }
     }, test);
     assert.equal(await page.locator('#initial-b-value').innerText(), (100 * test.p).toFixed(0) + '%');
+    assert.equal(await page.locator('#difference-value').innerText(), test.d.toFixed(2));
+    assert.equal(await page.locator('#tree-a-value').innerText(), (100 * (1 - test.p)).toFixed(0) + '%');
+    assert.equal(await page.locator('#tree-b-value').innerText(), (100 * test.p).toFixed(0) + '%');
     assert.equal(await page.locator('#local-b-value').innerText(), test.local);
     assert.equal(await page.locator('#joint-b-value').innerText(), test.joint);
     assert.equal(await page.locator('#toy-gap-value').innerText(), test.gap);
@@ -46,6 +73,44 @@ async function checkToy(page) {
   }
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.equal(await page.locator('mjx-merror').count(), 0);
+}
+
+async function checkReferencesAndFigure(page) {
+  const result = await page.evaluate(() => {
+    const references = [...document.querySelectorAll('.references > li')];
+    const citations = [...document.querySelectorAll('a[href^="#ref-"]')];
+    const body = getComputedStyle(document.body);
+    const caption = getComputedStyle(document.querySelector('#readout-comparison figcaption'));
+    const img = document.querySelector('#readout-comparison img');
+    return {
+      references: references.map(item => item.id),
+      firstUse: [...new Set(citations.map(link => link.hash.slice(1)))],
+      correctNumbers: citations.every(link => {
+        const number = references.findIndex(item => item.id === link.hash.slice(1)) + 1;
+        return number > 0 && link.textContent === String(number) &&
+          link.getAttribute('aria-label').startsWith(`Reference ${number}:`);
+      }),
+      correctBacklinks: references.every((item, index) =>
+        [...item.querySelectorAll('a[role="doc-backlink"]')].every(link =>
+          document.getElementById(link.hash.slice(1)) &&
+          link.getAttribute('aria-label').endsWith(`of reference ${index + 1}`))),
+      uniqueIds: document.querySelectorAll('[id]').length ===
+        new Set([...document.querySelectorAll('[id]')].map(el => el.id)).size,
+      captionMatchesBody: caption.fontFamily === body.fontFamily && caption.fontSize === body.fontSize,
+      imageLoaded: img.complete && img.naturalWidth > 0,
+      correctImageVariant: img.currentSrc.endsWith(innerWidth <= 600 ? '/logit-gaps-mobile.svg' : '/logit-gaps.svg'),
+      desktopContentsFit: innerWidth < 820 || document.querySelector('.contents').scrollWidth <= document.querySelector('.contents').clientWidth,
+      finalSection: [...document.querySelectorAll('.essay h2')].at(-1).id,
+      nextLink: document.querySelector('.contents a[href="#whats-next"]')?.textContent.trim(),
+    };
+  });
+  assert.deepEqual(result.firstUse, result.references);
+  assert.equal(result.references[0], page.url().includes('/diffusion/') ? 'ref-cfg' : 'ref-cot');
+  for (const key of ['correctNumbers', 'correctBacklinks', 'uniqueIds', 'captionMatchesBody', 'imageLoaded', 'correctImageVariant', 'desktopContentsFit']) {
+    assert.equal(result[key], true, key);
+  }
+  assert.equal(result.finalSection, 'whats-next');
+  assert.equal(result.nextLink, "06 What's next?");
 }
 
 (async () => {
@@ -133,7 +198,7 @@ async function checkToy(page) {
       assert.equal(await page.locator('mjx-merror').count(), 0);
       assert.equal(new URL(await page.locator('link[rel="canonical"]').getAttribute('href')).pathname, llm);
       await page.locator('#toy-strength').fill('0');
-      assert.equal(await page.locator('#joint-b-value').innerText(), '50.0%');
+      assert.equal(await page.locator('#joint-b-value').innerText(), '30.0%');
       await checkToy(page);
       await select(page, 'Diffusion readers', diffusion);
       assert.equal(await page.locator('#llm-fixture').count(), 0);
@@ -155,18 +220,23 @@ async function checkToy(page) {
         page.on('pageerror', error => errors.push(error.message));
         await page.goto(base + path);
         await settle(page);
+        assert.deepEqual(await page.locator('#guidance-toy input[type="range"]').evaluateAll(inputs =>
+          inputs.map(input => input.value)), ['0.3', '3', '0.4']);
+        assert.equal(await page.locator('#local-b-value').innerText(), '30.0%');
+        assert.equal(await page.locator('#joint-b-value').innerText(), '69.2%');
         await checkToy(page);
+        await checkReferencesAndFigure(page);
         await page.close();
       }
     }
 
     const plain = await browser.newPage({ javaScriptEnabled: false });
     await plain.goto(base + diffusion);
-    assert.equal(await plain.locator('#local-b-value').innerText(), '50.0%');
-    assert.equal(await plain.locator('#joint-b-value').innerText(), '62.1%');
+    assert.equal(await plain.locator('#local-b-value').innerText(), '30.0%');
+    assert.equal(await plain.locator('#joint-b-value').innerText(), '69.2%');
     await select(plain, 'LLM readers', llm);
-    assert.equal(await plain.locator('#local-b-value').innerText(), '50.0%');
-    assert.equal(await plain.locator('#joint-b-value').innerText(), '62.1%');
+    assert.equal(await plain.locator('#local-b-value').innerText(), '30.0%');
+    assert.equal(await plain.locator('#joint-b-value').innerText(), '69.2%');
     await plain.close();
 
     const fallback = await browser.newPage();
@@ -179,7 +249,7 @@ async function checkToy(page) {
     assert.equal(await fallback.evaluate(() => window.pageMarker), undefined);
     await fallback.close();
     assert.deepEqual(errors, []);
-    console.log('PASS: desktop/mobile, three-slider toy in both versions, no reload or retypesetting for matching bodies, scroll/widgets, history, anchors, independent content, rapid switching, reduced motion, no-JS and network fallback.');
+    console.log('PASS: desktop/mobile, ordered citations and backlinks, figure typography, closing section, three-slider toy in both versions, no reload or retypesetting for matching bodies, scroll/widgets, history, anchors, independent content, rapid switching, reduced motion, no-JS and network fallback.');
   } finally {
     await browser.close();
   }

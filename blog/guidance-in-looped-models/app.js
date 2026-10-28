@@ -31,12 +31,22 @@
     const initialB = toy.querySelector('#toy-initial-b');
     const strength = toy.querySelector('#toy-strength');
     const difference = toy.querySelector('#toy-difference');
+    const tree = root.querySelector('#two-token-tree');
     function update() {
       const p = Number(initialB.value), w = Number(strength.value), d = Number(difference.value);
       const result = compute(w, d, p);
       toy.querySelector('#initial-b-value').textContent = (100 * p).toFixed(0) + '%';
       toy.querySelector('#strength-value').textContent = w.toFixed(2);
       toy.querySelector('#difference-value').textContent = d.toFixed(2);
+      if (tree) {
+        tree.querySelector('#tree-a-value').textContent = (100 * (1 - p)).toFixed(0) + '%';
+        tree.querySelector('#tree-b-value').textContent = (100 * p).toFixed(0) + '%';
+        tree.querySelector('.token-tree-diagram').setAttribute('aria-label',
+          `The stronger predictor starts with A: ${(100 * (1 - p)).toFixed(0)}%, B: ${(100 * p).toFixed(0)}%. ` +
+          `After A, it assigns 50% to each next token. After B, it assigns ` +
+          `${(100 * (0.5 + d)).toFixed(0)}% to 1 and ${(100 * (0.5 - d)).toFixed(0)}% to 2. ` +
+          'These are probabilities before guidance. The complete sequences are A1, A2, B1, and B2.');
+      }
       toy.querySelector('#local-b-value').textContent = (100 * result.localB).toFixed(1) + '%';
       toy.querySelector('#local-b-bar').style.width = (100 * result.localB) + '%';
       toy.querySelector('#joint-b-value').textContent = (100 * result.jointB).toFixed(1) + '%';
@@ -47,7 +57,7 @@
       toy.querySelector('#toy-gap-label').textContent = agree ? 'gap.' : 'percentage-point gap.';
       toy.querySelector('#toy-gap-explanation').textContent = agree
         ? 'The two distributions agree.'
-        : 'Even the first-token probabilities differ.';
+        : 'Under this guidance setting, token-level and sequence-level guidance differ even in their first-token probabilities.';
       toy.classList.toggle('toy-agree', agree);
     }
     for (const slider of [initialB, strength, difference]) slider.addEventListener('input', update);
