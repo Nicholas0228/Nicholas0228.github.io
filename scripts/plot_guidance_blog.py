@@ -7,7 +7,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
+from matplotlib.text import Text
 from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
+
+
+FONT_SIZE = 18
 
 
 def main():
@@ -15,7 +19,7 @@ def main():
     data = json.loads((assets / "plot-data.json").read_text())
     font_manager.fontManager.addfont(assets.parent / "compress-to-remember/assets/fonts/Newsreader.ttf")
     plt.rcParams.update({
-        "font.family": "Newsreader", "font.size": 16,
+        "font.family": "Newsreader", "font.size": FONT_SIZE,
         "axes.spines.top": False, "axes.spines.right": False,
         "axes.edgecolor": "#c6cbc9", "text.color": "#282b2d",
         "axes.labelcolor": "#42484c", "xtick.color": "#535b60",
@@ -36,6 +40,7 @@ def render(data, assets, mobile):
     markers = {"huginn": "o", "ouro": "s", "qwen": "^", "pythia": "D"}
     metrics = [("centered_logit_rms", "A  Change in next-token scores", "Logit change (centered RMS)", [0, 1, 2, 3, 4, 5]),
                ("relative_centered_rms", "B  Same change, adjusted for scale", "Change / final-logit\ncentered RMS", [0, .5, 1, 1.5, 2])]
+    panel_titles = []
     for ax, (metric, title, ylabel, ticks) in zip(axes, metrics):
         ax.set_facecolor("#fcfbf8")
         for m in data["models"]:
@@ -47,9 +52,9 @@ def render(data, assets, mobile):
             ax.fill_between(x, low, high, color=color, alpha=.16, linewidth=0)
             ax.plot(x, mean, color=color, lw=2, marker=markers[m["key"]], ms=5,
                     ls="-" if m["kind"] == "loop" else "--", label=m["label"])
-        ax.set_title(title, loc="left", fontsize=18, pad=20, weight="medium")
-        ax.set_xlabel("Intermediate loop / layer\n(% of final depth)", labelpad=12, fontsize=14)
-        ax.set_ylabel(ylabel, labelpad=9)
+        panel_titles.append(ax.set_title(title, loc="left", fontsize=FONT_SIZE, pad=20, weight="medium"))
+        ax.set_xlabel("Intermediate loop / layer\n(% of final depth)", labelpad=12, fontsize=FONT_SIZE)
+        ax.set_ylabel(ylabel, labelpad=9, fontsize=FONT_SIZE)
         highest_ci = max(d[metric]["question_bootstrap_95ci"][1]
                          for m in data["models"] for d in m["depths"]
                          if d["depth"] < m["final_depth"])
@@ -61,20 +66,27 @@ def render(data, assets, mobile):
         ax.yaxis.set_minor_locator(NullLocator())
         ax.grid(axis="y", color="#dfe3e0", linewidth=.7)
         ax.set_axisbelow(True)
-        ax.tick_params(length=3, pad=7)
+        ax.tick_params(length=3, pad=7, labelsize=FONT_SIZE)
     handles, labels = axes[0].get_legend_handles_labels()
-    legend = fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(.52, .02), ncol=1 if mobile else 2,
-                        frameon=False, fontsize=15, columnspacing=2.5, handlelength=2.6)
+    legend = fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(.52, .005), ncol=1 if mobile else 2,
+                        frameon=False, fontsize=FONT_SIZE, columnspacing=2.5, handlelength=2.6)
     if mobile:
-        fig.subplots_adjust(left=.22, right=.94, top=.93, bottom=.29, hspace=.65)
+        fig.subplots_adjust(left=.25, right=.94, top=.93, bottom=.30, hspace=.85)
     else:
-        fig.subplots_adjust(left=.09, right=.96, top=.86, bottom=.32, wspace=.36)
+        fig.subplots_adjust(left=.09, right=.96, top=.86, bottom=.36, wspace=.36)
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     assert not legend.get_window_extent(renderer).overlaps(axes[-1].xaxis.label.get_window_extent(renderer)), (
         mobile, legend.get_window_extent(renderer).bounds, axes[-1].xaxis.label.get_window_extent(renderer).bounds)
     for ax in axes:
         assert ax.yaxis.label.get_window_extent(renderer).x0 >= 0
+    for label in fig.findobj(match=Text):
+        if label.get_text():
+            assert label.get_fontsize() == FONT_SIZE, label.get_text()
+            bounds = label.get_window_extent(renderer)
+            assert bounds.x0 >= 0 and bounds.y0 >= 0 and bounds.x1 <= fig.bbox.width and bounds.y1 <= fig.bbox.height, label.get_text()
+    if mobile:
+        assert not axes[0].xaxis.label.get_window_extent(renderer).overlaps(panel_titles[1].get_window_extent(renderer))
     for ext in (["svg"] if mobile else ["svg", "pdf", "png"]):
         stem = "logit-gaps-mobile" if mobile else "logit-gaps"
         target = assets / f"{stem}.{ext}"
