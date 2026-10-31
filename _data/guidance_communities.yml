@@ -1,6 +1,6 @@
 - id: llm
-  label: LLM readers
+  label: LLM community
   url: /blog/2026/10/guidance-in-looped-models/
 - id: diffusion
-  label: Diffusion readers
+  label: Diffusion community
   url: /blog/2026/10/guidance-in-looped-models/diffusion/

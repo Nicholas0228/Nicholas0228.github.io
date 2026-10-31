@@ -90,6 +90,15 @@ async function checkReferencesAndFigure(page) {
         return number > 0 && link.textContent === String(number) &&
           link.getAttribute('aria-label').startsWith(`Reference ${number}:`);
       }),
+      citationPlacementIssues: [...document.querySelectorAll('sup.citation')].flatMap(citation => {
+        let previous = citation.previousSibling;
+        while (previous && (!previous.textContent.trim() ||
+          (previous.nodeType === Node.ELEMENT_NODE && previous.matches('sup.citation')))) {
+          previous = previous.previousSibling;
+        }
+        return /[.,;:!?]$/.test(previous?.textContent.trimEnd() || '') ? [] :
+          [citation.id || citation.querySelector('a')?.id];
+      }),
       correctBacklinks: references.every((item, index) =>
         [...item.querySelectorAll('a[role="doc-backlink"]')].every(link =>
           document.getElementById(link.hash.slice(1)) &&
@@ -105,6 +114,7 @@ async function checkReferencesAndFigure(page) {
     };
   });
   assert.deepEqual(result.firstUse, result.references);
+  assert.deepEqual(result.citationPlacementIssues, [], 'Citations must follow punctuation');
   assert.equal(result.references[0], page.url().includes('/diffusion/') ? 'ref-cfg' : 'ref-cot');
   for (const key of ['correctNumbers', 'correctBacklinks', 'uniqueIds', 'captionMatchesBody', 'imageLoaded', 'correctImageVariant', 'desktopContentsFit']) {
     assert.equal(result[key], true, key);
@@ -151,7 +161,7 @@ async function checkReferencesAndFigure(page) {
         initial.dispatchEvent(new Event('input'));
         window.scrollTo({ top: 600, behavior: 'instant' });
       });
-      await page.getByRole('link', { name: 'LLM readers', exact: true }).dispatchEvent('click');
+      await page.getByRole('link', { name: 'LLM community', exact: true }).dispatchEvent('click');
       await page.waitForURL(base + llm);
       const state = await page.evaluate(() => ({
         sameMath: window.savedMath === document.querySelector('#loop-architecture mjx-container'),
@@ -163,7 +173,7 @@ async function checkReferencesAndFigure(page) {
         overflow: document.documentElement.scrollWidth > innerWidth,
       }));
       assert.deepEqual(state, { sameMath: true, scroll: 600, slider: '2', initialB: '0.1', localB: '10.0%', proofOpen: true, overflow: false });
-      await select(page, 'Diffusion readers', diffusion);
+      await select(page, 'Diffusion community', diffusion);
       await page.goBack();
       await page.waitForFunction(() => document.querySelector('.community-switch').dataset.community === 'llm');
       assert.equal(page.url(), base + llm);
@@ -171,10 +181,10 @@ async function checkReferencesAndFigure(page) {
       await page.waitForFunction(() => document.querySelector('.community-switch').dataset.community === 'diffusion');
       await page.evaluate(() => { location.hash = 'loops'; });
       await page.waitForFunction(() => [...document.querySelectorAll('.community-switch a')].every(link => link.hash === '#loops'));
-      await select(page, 'LLM readers', llm + '#loops');
+      await select(page, 'LLM community', llm + '#loops');
       await page.reload();
       await settle(page);
-      assert.equal(await page.locator('.community-switch [aria-current]').innerText(), 'LLM readers');
+      assert.equal(await page.locator('.community-switch [aria-current]').innerText(), 'LLM community');
       assert.equal(await page.locator('mjx-merror').count(), 0);
       await page.close();
     }
@@ -192,7 +202,7 @@ async function checkReferencesAndFigure(page) {
       await page.goto(base + diffusion);
       await settle(page);
       await page.evaluate(() => { window.pageMarker = true; });
-      await select(page, 'LLM readers', llm);
+      await select(page, 'LLM community', llm);
       assert.equal(await page.evaluate(() => window.pageMarker), true);
       assert.equal(await page.locator('#llm-fixture mjx-container').count(), 1);
       assert.equal(await page.locator('mjx-merror').count(), 0);
@@ -200,7 +210,7 @@ async function checkReferencesAndFigure(page) {
       await page.locator('#toy-strength').fill('0');
       assert.equal(await page.locator('#joint-b-value').innerText(), '30.0%');
       await checkToy(page);
-      await select(page, 'Diffusion readers', diffusion);
+      await select(page, 'Diffusion community', diffusion);
       assert.equal(await page.locator('#llm-fixture').count(), 0);
       assert.equal(await page.locator('mjx-merror').count(), 0);
       await checkToy(page);
@@ -234,7 +244,7 @@ async function checkReferencesAndFigure(page) {
     await plain.goto(base + diffusion);
     assert.equal(await plain.locator('#local-b-value').innerText(), '30.0%');
     assert.equal(await plain.locator('#joint-b-value').innerText(), '69.2%');
-    await select(plain, 'LLM readers', llm);
+    await select(plain, 'LLM community', llm);
     assert.equal(await plain.locator('#local-b-value').innerText(), '30.0%');
     assert.equal(await plain.locator('#joint-b-value').innerText(), '69.2%');
     await plain.close();
@@ -245,7 +255,7 @@ async function checkReferencesAndFigure(page) {
     await fallback.goto(base + diffusion);
     await settle(fallback);
     await fallback.evaluate(() => { window.pageMarker = true; });
-    await select(fallback, 'LLM readers', llm);
+    await select(fallback, 'LLM community', llm);
     assert.equal(await fallback.evaluate(() => window.pageMarker), undefined);
     await fallback.close();
     assert.deepEqual(errors, []);
