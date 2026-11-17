@@ -4,8 +4,8 @@
   label: "Nov 2026"
   new: true
   text: >-
-    Explore <a href="/blog/hit/">HiT</a>, our Hierarchical Diffusion Transformer
-    for End-to-End Image Generation, with interactive figures and generated images.
+    Check <a href="/blog/hit/">HiT</a>! Emergent segmentation-like grouping
+    and much better image quality.
 
 - date: "2026-10-22"
   label: "Oct 2026"
