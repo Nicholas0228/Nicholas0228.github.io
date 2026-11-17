@@ -1,5 +1,12 @@
 # Newest updates first. Use year-only dates when the announcement month is unknown.
 # Historical announcements are preserved from the site's Git history.
+- date: "2026-11-17"
+  label: "Nov 2026"
+  new: true
+  text: >-
+    Explore <a href="/blog/hit/">HiT</a>, our Hierarchical Diffusion Transformer
+    for End-to-End Image Generation, with interactive figures and generated images.
+
 - date: "2026-10-22"
   label: "Oct 2026"
   new: true
